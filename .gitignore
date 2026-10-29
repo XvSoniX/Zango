@@ -43,7 +43,6 @@ logs/
 # IntelliJ IDEA
 # ==============================
 .idea/
-.idea/*
 *.iml
 *.iws
 *.ipr
