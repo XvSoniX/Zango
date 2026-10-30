@@ -9,6 +9,25 @@ spring:
     gateway:
       server:
         webflux:
+          globalcors:
+            cors-configurations:
+              '[/**]':
+                allowed-origins:
+                  - ${FRONTEND_URL:http://localhost:3000}
+                allowed-methods:
+                  - GET
+                  - POST
+                  - PUT
+                  - PATCH
+                  - DELETE
+                  - OPTIONS
+                allowed-headers:
+                  - Authorization
+                  - Content-Type
+                  - Accept
+                allow-credentials: false
+                max-age: 3600
+
           discovery:
             locator:
               enabled: false
