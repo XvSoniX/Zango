@@ -9,6 +9,29 @@ spring:
     gateway:
       server:
         webflux:
+          httpclient:
+            connect-timeout: 3000
+
+            response-timeout: 5s
+          default-filters:
+            - name: Retry
+              args:
+                retries: 1
+                methods:
+                  - GET
+                statuses:
+                  - BAD_GATEWAY
+                  - SERVICE_UNAVAILABLE
+                  - GATEWAY_TIMEOUT
+                exceptions:
+                  - java.io.IOException
+                  - java.util.concurrent.TimeoutException
+                backoff:
+                  firstBackoff: 200ms
+                  maxBackoff: 1s
+                  factor: 2
+                  basedOnPreviousValue: false
+
           globalcors:
             cors-configurations:
               '[/**]':
@@ -44,6 +67,11 @@ spring:
       resourceserver:
         jwt:
           public-key-location: file:${JWT_PUBLIC_KEY_PATH:./keys/public.pem}
+
+  messages:
+    basename: i18n/messages
+    encoding: UTF-8
+    fallback-to-system-locale: false
 
 eureka:
   instance:
