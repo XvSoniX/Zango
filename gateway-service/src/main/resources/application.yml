@@ -9,6 +9,48 @@ spring:
     gateway:
       server:
         webflux:
+          httpclient:
+            connect-timeout: 3000
+
+            response-timeout: 5s
+          default-filters:
+            - name: Retry
+              args:
+                retries: 1
+                methods:
+                  - GET
+                statuses:
+                  - BAD_GATEWAY
+                  - SERVICE_UNAVAILABLE
+                  - GATEWAY_TIMEOUT
+                exceptions:
+                  - java.io.IOException
+                  - java.util.concurrent.TimeoutException
+                backoff:
+                  firstBackoff: 200ms
+                  maxBackoff: 1s
+                  factor: 2
+                  basedOnPreviousValue: false
+
+          globalcors:
+            cors-configurations:
+              '[/**]':
+                allowed-origins:
+                  - ${FRONTEND_URL:http://localhost:3000}
+                allowed-methods:
+                  - GET
+                  - POST
+                  - PUT
+                  - PATCH
+                  - DELETE
+                  - OPTIONS
+                allowed-headers:
+                  - Authorization
+                  - Content-Type
+                  - Accept
+                allow-credentials: false
+                max-age: 3600
+
           discovery:
             locator:
               enabled: false
@@ -25,6 +67,11 @@ spring:
       resourceserver:
         jwt:
           public-key-location: file:${JWT_PUBLIC_KEY_PATH:./keys/public.pem}
+
+  messages:
+    basename: i18n/messages
+    encoding: UTF-8
+    fallback-to-system-locale: false
 
 eureka:
   instance:
@@ -46,3 +93,19 @@ management:
   endpoint:
     health:
       show-details: never
+
+resilience4j:
+  circuitbreaker:
+    configs:
+      default:
+        sliding-window-type: COUNT_BASED
+        sliding-window-size: 10
+        minimum-number-of-calls: 5
+        failure-rate-threshold: 50
+        permitted-number-of-calls-in-half-open-state: 3
+        wait-duration-in-open-state: 10s
+        automatic-transition-from-open-to-half-open-enabled: true
+
+#    instances:
+#      authService:
+#        base-config: default
