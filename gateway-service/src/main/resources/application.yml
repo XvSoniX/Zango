@@ -66,8 +66,7 @@ spring:
     oauth2:
       resourceserver:
         jwt:
-          public-key-location: file:${JWT_PUBLIC_KEY_PATH:./keys/public.pem}
-
+          public-key-location: file:${JWT_PUBLIC_KEY_PATH:./gateway-service/keys/public.pem}
   messages:
     basename: i18n/messages
     encoding: UTF-8
@@ -109,3 +108,10 @@ resilience4j:
 #    instances:
 #      authService:
 #        base-config: default
+
+logging:
+  file:
+    name: logs/gateway/gateway-service.log
+  level:
+    com.netflix.eureka: WARN
+    com.netflix.discovery: WARN
