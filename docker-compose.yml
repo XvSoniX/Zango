@@ -1,0 +1,58 @@
+services:
+  discovery-service:
+    build:
+      context: .
+      args:
+        SERVICE: discovery-service
+        PORT: "8761"
+    image: zango-discovery
+    environment:
+      EUREKA_HOSTNAME: discovery-service
+      EUREKA_USERNAME: ${EUREKA_USERNAME:-root}
+      EUREKA_PASSWORD: ${EUREKA_PASSWORD:-toor123}
+      LOGGING_FILE_NAME: ""
+    ports:
+      - "8761:8761"
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:8761/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 60s
+    networks:
+      - zango
+
+  gateway-service:
+    build:
+      context: .
+      args:
+        SERVICE: gateway-service
+        PORT: "8080"
+    image: zango-gateway
+    depends_on:
+      discovery-service:
+        condition: service_healthy
+    environment:
+      GATEWAY_PORT: "8080"
+      EUREKA_USERNAME: ${EUREKA_USERNAME:-root}
+      EUREKA_PASSWORD: ${EUREKA_PASSWORD:-toor123}
+      EUREKA_SERVER_URL: http://${EUREKA_USERNAME:-root}:${EUREKA_PASSWORD:-toor123}@discovery-service:8761/eureka/
+      JWT_PUBLIC_KEY_PATH: /run/secrets/public.pem
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:3000}
+      LOGGING_FILE_NAME: ""
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./gateway-service/keys/public.pem:/run/secrets/public.pem:ro
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:8080/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 60s
+    networks:
+      - zango
+
+networks:
+  zango:
+    name: zango

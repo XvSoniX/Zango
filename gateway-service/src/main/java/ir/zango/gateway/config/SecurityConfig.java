@@ -36,12 +36,15 @@ public class SecurityConfig {
                         .authenticationEntryPoint(authenticationErrorHandler)
                         .accessDeniedHandler(accessDeniedErrorHandler)
                 )
-                .authorizeExchange(exchanges -> exchanges.pathMatchers(
-                        HttpMethod.POST,
-                        "/api/v1/auth/login",
-                        "/api/v1/auth/register",
-                        "/api/v1/auth/refresh"
-                ).permitAll().anyExchange().authenticated())
+                .authorizeExchange(exchanges -> exchanges
+                        .pathMatchers(HttpMethod.GET, "/actuator/health", "/actuator/health/**").permitAll()
+                        .pathMatchers(
+                                HttpMethod.POST,
+                                "/api/v1/auth/login",
+                                "/api/v1/auth/register",
+                                "/api/v1/auth/refresh"
+                        ).permitAll()
+                        .anyExchange().authenticated())
                 .oauth2ResourceServer(oauth2 -> oauth2.jwt(jwt -> {}))
                 .build();
     }
