@@ -17,6 +17,7 @@ import ir.zango.auth.repository.UserRoleRepository;
 import ir.zango.auth.service.IdentifierNormalizer;
 import ir.zango.auth.service.RegistrationService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -28,6 +29,7 @@ import java.time.Instant;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class RegistrationServiceImpl implements RegistrationService {
 
     private static final String DEFAULT_ROLE = "ROLE_USER";
@@ -46,6 +48,7 @@ public class RegistrationServiceImpl implements RegistrationService {
         String identifier = IdentifierNormalizer.normalize(request.identifier(), identifierType);
 
         if (credentialRepository.findByIdentifierTypeAndIdentifier(identifierType, identifier).isPresent()) {
+            log.warn("Registration rejected because the {} identifier is already in use", identifierType);
             throw new DuplicateIdentifierException();
         }
 
@@ -70,12 +73,15 @@ public class RegistrationServiceImpl implements RegistrationService {
             credentialRepository.saveAndFlush(credential);
         } catch (DataIntegrityViolationException exception) {
             if (isDuplicateIdentifier(exception)) {
+                log.warn("Registration rejected because the {} identifier is already in use", identifierType);
                 throw new DuplicateIdentifierException();
             }
+            log.error("Registration failed because of a data integrity violation", exception);
             throw exception;
         }
 
         userRoleRepository.saveAndFlush(UserRoleEntity.create(user, role, now));
+        log.info("Registered user {} with identifier type {}", user.getId(), identifierType);
 
         return new RegistrationResponseDTO(user.getId(), identifier, identifierType, user.getStatus());
     }

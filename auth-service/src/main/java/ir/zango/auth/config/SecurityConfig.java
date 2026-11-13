@@ -44,6 +44,10 @@ public class SecurityConfig {
         return converter;
     }
 
+    /**
+     * Stateless API security: public auth and health routes, admin role on admin paths,
+     * and a validated access token for everything else.
+     */
     @Bean
     public SecurityFilterChain securityFilterChain(
             HttpSecurity http,

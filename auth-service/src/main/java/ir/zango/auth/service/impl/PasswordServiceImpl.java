@@ -20,6 +20,7 @@ import ir.zango.auth.service.PasswordResetRateLimiter;
 import ir.zango.auth.service.PasswordService;
 import ir.zango.auth.service.RefreshTokenService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -36,6 +37,7 @@ import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class PasswordServiceImpl implements PasswordService {
 
     private static final int TOKEN_BYTES = 32;
@@ -54,6 +56,7 @@ public class PasswordServiceImpl implements PasswordService {
     public void changePassword(UUID userId, ChangePasswordRequestDTO request) {
         List<CredentialEntity> credentials = credentialRepository.findByUser_Id(userId);
         if (credentials.isEmpty() || !matchesCurrentPassword(credentials, request.currentPassword())) {
+            log.warn("Password change rejected for user {}", userId);
             throw new AuthenticationFailedException();
         }
 
@@ -64,6 +67,7 @@ public class PasswordServiceImpl implements PasswordService {
             credential.assignUpdatedAt(now);
         }
         refreshTokenService.logoutAll(userId);
+        log.info("Password changed for user {}", userId);
     }
 
     @Override
@@ -71,6 +75,7 @@ public class PasswordServiceImpl implements PasswordService {
     public void requestReset(ForgotPasswordRequestDTO request) {
         String email = IdentifierNormalizer.normalize(request.email(), IdentifierTypeEnum.EMAIL);
         if (!passwordResetRateLimiter.allow(email)) {
+            log.warn("Password reset request rejected because the rate limit was exceeded");
             throw new TooManyRequestsException();
         }
 
@@ -78,6 +83,7 @@ public class PasswordServiceImpl implements PasswordService {
                 .findByIdentifierTypeAndIdentifier(IdentifierTypeEnum.EMAIL, email)
                 .orElse(null);
         if (credential == null || !AccountStatusRules.canAuthenticate(credential.getUser())) {
+            log.debug("Password reset request ignored");
             return;
         }
 
@@ -93,6 +99,7 @@ public class PasswordServiceImpl implements PasswordService {
                 now
         ));
         passwordResetNotifier.notify(email, rawToken);
+        log.info("Issued password reset token for user {}", user.getId());
     }
 
     @Override
@@ -103,18 +110,21 @@ public class PasswordServiceImpl implements PasswordService {
                 .orElse(null);
         Instant now = Instant.now();
         if (token == null || token.getUsedAt() != null || !token.getExpiresAt().isAfter(now)) {
+            log.warn("Password reset rejected because the token is missing, expired, or already used");
             throw new PasswordResetFailedException();
         }
 
         UserEntity user = token.getUser();
         if (!AccountStatusRules.canAuthenticate(user)) {
             token.setUsedAt(now);
+            log.warn("Password reset rejected for user {} because the account cannot authenticate", user.getId());
             throw new PasswordResetFailedException();
         }
 
         List<CredentialEntity> credentials = credentialRepository.findByUser_Id(user.getId());
         if (credentials.isEmpty()) {
             token.setUsedAt(now);
+            log.warn("Password reset rejected for user {} because no credential exists", user.getId());
             throw new PasswordResetFailedException();
         }
 
@@ -126,6 +136,7 @@ public class PasswordServiceImpl implements PasswordService {
         token.setUsedAt(now);
         passwordResetTokenRepository.consumeActiveByUserIdExcept(user.getId(), token.getId(), now);
         refreshTokenService.logoutAll(user.getId());
+        log.info("Password reset completed for user {}", user.getId());
     }
 
     private boolean matchesCurrentPassword(List<CredentialEntity> credentials, String currentPassword) {
@@ -141,6 +152,7 @@ public class PasswordServiceImpl implements PasswordService {
         try {
             return passwordEncoder.matches(rawPassword, passwordHash);
         } catch (IllegalArgumentException exception) {
+            log.debug("Stored password hash could not be verified");
             return false;
         }
     }
@@ -156,6 +168,7 @@ public class PasswordServiceImpl implements PasswordService {
             byte[] digest = MessageDigest.getInstance("SHA-256").digest(rawToken.getBytes(StandardCharsets.UTF_8));
             return HexFormat.of().formatHex(digest);
         } catch (NoSuchAlgorithmException exception) {
+            log.error("SHA-256 is not available", exception);
             throw new IllegalStateException("SHA-256 is not available", exception);
         }
     }

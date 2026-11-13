@@ -20,6 +20,7 @@ import ir.zango.auth.repository.UserRepository;
 import ir.zango.auth.repository.UserRoleRepository;
 import ir.zango.auth.service.RoleService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
@@ -32,6 +33,7 @@ import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class RoleServiceImpl implements RoleService {
 
     private static final String ROLE_NAME_CONSTRAINT = "uk_roles_name";
@@ -46,6 +48,7 @@ public class RoleServiceImpl implements RoleService {
     public RoleResponseDTO create(CreateRoleRequestDTO request) {
         String name = request.name().trim();
         if (roleRepository.findByName(name).isPresent()) {
+            log.warn("Role creation rejected because {} already exists", name);
             throw new DuplicateRoleException();
         }
 
@@ -53,11 +56,14 @@ public class RoleServiceImpl implements RoleService {
             RoleEntity role = roleRepository.saveAndFlush(
                     RoleEntity.create(name, description(request.description()), Instant.now())
             );
+            log.info("Created role {}", role.getName());
             return toResponse(role);
         } catch (DataIntegrityViolationException exception) {
             if (isConstraint(exception, ROLE_NAME_CONSTRAINT)) {
+                log.warn("Role creation rejected because {} already exists", name);
                 throw new DuplicateRoleException();
             }
+            log.error("Role creation failed because of a data integrity violation", exception);
             throw exception;
         }
     }
@@ -78,10 +84,12 @@ public class RoleServiceImpl implements RoleService {
         roleRepository.findByName(name)
                 .filter(existing -> !existing.getId().equals(roleId))
                 .ifPresent(existing -> {
+                    log.warn("Role update rejected because {} already exists", name);
                     throw new DuplicateRoleException();
                 });
         role.setName(name);
         role.setDescription(description(request.description()));
+        log.info("Updated role {}", role.getId());
         return toResponse(role);
     }
 
@@ -92,9 +100,11 @@ public class RoleServiceImpl implements RoleService {
             throw new RoleNotFoundException();
         }
         if (userRoleRepository.existsByRole_Id(roleId)) {
+            log.warn("Role deletion rejected because role {} is still assigned", roleId);
             throw new RoleInUseException();
         }
         roleRepository.deleteById(roleId);
+        log.info("Deleted role {}", roleId);
     }
 
     @Override
@@ -119,15 +129,19 @@ public class RoleServiceImpl implements RoleService {
         RoleEntity role = roleRepository.findById(request.roleId()).orElseThrow(RoleNotFoundException::new);
         UserRoleId id = new UserRoleId(userId, role.getId());
         if (userRoleRepository.existsById(id)) {
+            log.warn("Role assignment rejected because user {} already has role {}", userId, role.getName());
             throw new DuplicateRoleAssignmentException();
         }
 
         try {
             userRoleRepository.saveAndFlush(UserRoleEntity.create(user, role, Instant.now()));
+            log.info("Assigned role {} to user {}", role.getName(), userId);
         } catch (DataIntegrityViolationException exception) {
             if (isConstraint(exception, USER_ROLE_PRIMARY_KEY)) {
+                log.warn("Role assignment rejected because user {} already has role {}", userId, role.getName());
                 throw new DuplicateRoleAssignmentException();
             }
+            log.error("Role assignment failed because of a data integrity violation", exception);
             throw exception;
         }
     }
@@ -146,6 +160,7 @@ public class RoleServiceImpl implements RoleService {
             throw new RoleNotFoundException();
         }
         userRoleRepository.deleteById(id);
+        log.info("Revoked role {} from user {}", roleId, userId);
     }
 
     private RoleResponseDTO toResponse(RoleEntity role) {

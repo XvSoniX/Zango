@@ -3,6 +3,7 @@ package ir.zango.auth.security;
 import ir.zango.auth.config.JwtProperties;
 import ir.zango.auth.repository.UserRoleRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.oauth2.jose.jws.SignatureAlgorithm;
 import org.springframework.security.oauth2.jwt.JwsHeader;
 import org.springframework.security.oauth2.jwt.JwtClaimsSet;
@@ -17,12 +18,16 @@ import java.util.UUID;
 
 @Component
 @RequiredArgsConstructor
+@Slf4j
 public class JwtAccessTokenGenerator {
 
     private final JwtEncoder jwtEncoder;
     private final JwtProperties jwtProperties;
     private final UserRoleRepository userRoleRepository;
 
+    /**
+     * Issues an RS256 access token for the user. The token value is not logged.
+     */
     @Transactional(readOnly = true)
     public AccessToken generate(UUID userId) {
         Instant issuedAt = Instant.now();
@@ -49,6 +54,7 @@ public class JwtAccessTokenGenerator {
                         claims
                 )
         ).getTokenValue();
+        log.debug("Issued access token for user {}", userId);
 
         return new AccessToken(
                 token,
