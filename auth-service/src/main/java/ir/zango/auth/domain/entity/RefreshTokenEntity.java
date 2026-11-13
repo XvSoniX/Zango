@@ -65,4 +65,20 @@ public class RefreshTokenEntity {
     public void assignCreatedAt(Instant createdAt) {
         this.createdAt = createdAt;
     }
+
+    public static RefreshTokenEntity issue(
+            UserEntity user,
+            String tokenHash,
+            UUID familyId,
+            Instant expiresAt,
+            Instant createdAt
+    ) {
+        RefreshTokenEntity token = new RefreshTokenEntity();
+        token.user = user;
+        token.tokenHash = tokenHash;
+        token.familyId = familyId;
+        token.expiresAt = expiresAt;
+        token.createdAt = createdAt;
+        return token;
+    }
 }

@@ -1,6 +1,7 @@
 package ir.zango.auth;
 
 import ir.zango.auth.repository.CredentialRepository;
+import ir.zango.auth.repository.RefreshTokenRepository;
 import ir.zango.auth.repository.RoleRepository;
 import ir.zango.auth.repository.UserRepository;
 import ir.zango.auth.repository.UserRoleRepository;
@@ -19,5 +20,6 @@ import java.lang.annotation.Target;
 @MockitoBean(types = CredentialRepository.class)
 @MockitoBean(types = RoleRepository.class)
 @MockitoBean(types = UserRoleRepository.class)
+@MockitoBean(types = RefreshTokenRepository.class)
 public @interface AuthSpringBootTest {
 }
