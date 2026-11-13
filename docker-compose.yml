@@ -38,6 +38,8 @@ services:
       EUREKA_PASSWORD: ${EUREKA_PASSWORD:-toor123}
       EUREKA_SERVER_URL: http://${EUREKA_USERNAME:-root}:${EUREKA_PASSWORD:-toor123}@discovery-service:8761/eureka/
       JWT_PUBLIC_KEY_PATH: /run/secrets/public.pem
+      JWT_ISSUER: ${JWT_ISSUER:-http://localhost:8081}
+      JWT_AUDIENCE: ${JWT_AUDIENCE:-zango}
       FRONTEND_URL: ${FRONTEND_URL:-http://localhost:3000}
       LOGGING_FILE_NAME: ""
     ports:

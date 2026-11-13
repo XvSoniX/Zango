@@ -9,6 +9,7 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.converter.RsaKeyConverters;
+import org.springframework.security.oauth2.jose.jws.SignatureAlgorithm;
 import org.springframework.security.oauth2.core.DelegatingOAuth2TokenValidator;
 import org.springframework.security.oauth2.core.OAuth2Error;
 import org.springframework.security.oauth2.core.OAuth2TokenValidator;
@@ -59,16 +60,24 @@ public class JwtConfig {
                                 )
                         )
                 )
-        ).build();
-        decoder.setJwtValidator(validator(properties.getIssuer()));
+        ).signatureAlgorithm(SignatureAlgorithm.RS256).build();
+        decoder.setJwtValidator(validator(properties.getIssuer(), properties.getAudience()));
         return decoder;
     }
 
-    private OAuth2TokenValidator<Jwt> validator(String issuer) {
+    private OAuth2TokenValidator<Jwt> validator(String issuer, String audience) {
         return new DelegatingOAuth2TokenValidator<>(
                 JwtValidators.createDefaultWithIssuer(issuer),
+                token -> requireAudience(token, audience),
                 this::requireSubject
         );
+    }
+
+    private OAuth2TokenValidatorResult requireAudience(Jwt token, String audience) {
+        if (token.getAudience() == null || !token.getAudience().contains(audience)) {
+            return OAuth2TokenValidatorResult.failure(new OAuth2Error("invalid_token"));
+        }
+        return OAuth2TokenValidatorResult.success();
     }
 
     private OAuth2TokenValidatorResult requireSubject(Jwt token) {
@@ -84,6 +93,9 @@ public class JwtConfig {
         }
         if (properties.getIssuer() == null || properties.getIssuer().isBlank()) {
             throw new IllegalStateException("JWT issuer is required");
+        }
+        if (properties.getAudience() == null || properties.getAudience().isBlank()) {
+            throw new IllegalStateException("JWT audience is required");
         }
         if (properties.getKeyId() == null || properties.getKeyId().isBlank()) {
             throw new IllegalStateException("JWT key id is required");
