@@ -1,0 +1,84 @@
+databaseChangeLog:
+  - changeSet:
+      id: 005-create-refresh-tokens
+      author: zango
+      changes:
+        - createTable:
+            tableName: refresh_tokens
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  constraints:
+                    primaryKey: true
+                    primaryKeyName: pk_refresh_tokens
+                    nullable: false
+              - column:
+                  name: user_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+              - column:
+                  name: token_hash
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: family_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+              - column:
+                  name: expires_at
+                  type: timestamp(6) with time zone
+                  constraints:
+                    nullable: false
+              - column:
+                  name: revoked_at
+                  type: timestamp(6) with time zone
+              - column:
+                  name: replaced_by_id
+                  type: uuid
+              - column:
+                  name: created_at
+                  type: timestamp(6) with time zone
+                  constraints:
+                    nullable: false
+        - addForeignKeyConstraint:
+            baseTableName: refresh_tokens
+            baseColumnNames: user_id
+            referencedTableName: users
+            referencedColumnNames: id
+            constraintName: fk_refresh_tokens_user_id
+        - addForeignKeyConstraint:
+            baseTableName: refresh_tokens
+            baseColumnNames: replaced_by_id
+            referencedTableName: refresh_tokens
+            referencedColumnNames: id
+            constraintName: fk_refresh_tokens_replaced_by_id
+        - addUniqueConstraint:
+            tableName: refresh_tokens
+            columnNames: token_hash
+            constraintName: uk_refresh_tokens_token_hash
+        - addUniqueConstraint:
+            tableName: refresh_tokens
+            columnNames: replaced_by_id
+            constraintName: uk_refresh_tokens_replaced_by_id
+        - createIndex:
+            tableName: refresh_tokens
+            indexName: idx_refresh_tokens_user_id
+            columns:
+              - column:
+                  name: user_id
+        - createIndex:
+            tableName: refresh_tokens
+            indexName: idx_refresh_tokens_family_id
+            columns:
+              - column:
+                  name: family_id
+        - createIndex:
+            tableName: refresh_tokens
+            indexName: idx_refresh_tokens_expires_at
+            columns:
+              - column:
+                  name: expires_at
