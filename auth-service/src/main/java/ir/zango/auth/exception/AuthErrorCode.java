@@ -53,6 +53,16 @@ public enum AuthErrorCode {
             "https://zango.ir/problems/role-in-use"
     ),
 
+    PASSWORD_RESET_FAILED(
+            HttpStatus.BAD_REQUEST,
+            "https://zango.ir/problems/password-reset-failed"
+    ),
+
+    TOO_MANY_REQUESTS(
+            HttpStatus.TOO_MANY_REQUESTS,
+            "https://zango.ir/problems/too-many-requests"
+    ),
+
     INTERNAL_SERVER_ERROR(
             HttpStatus.INTERNAL_SERVER_ERROR,
             "https://zango.ir/problems/internal-server-error"

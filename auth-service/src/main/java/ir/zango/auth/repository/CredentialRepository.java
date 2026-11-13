@@ -4,6 +4,7 @@ import ir.zango.auth.domain.entity.CredentialEntity;
 import ir.zango.auth.domain.enums.IdentifierTypeEnum;
 import org.springframework.data.jpa.repository.JpaRepository;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -13,4 +14,6 @@ public interface CredentialRepository extends JpaRepository<CredentialEntity, UU
             IdentifierTypeEnum identifierType,
             String identifier
     );
+
+    List<CredentialEntity> findByUser_Id(UUID userId);
 }
