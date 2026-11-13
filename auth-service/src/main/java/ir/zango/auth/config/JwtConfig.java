@@ -9,8 +9,14 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.converter.RsaKeyConverters;
+import org.springframework.security.oauth2.core.DelegatingOAuth2TokenValidator;
+import org.springframework.security.oauth2.core.OAuth2Error;
+import org.springframework.security.oauth2.core.OAuth2TokenValidator;
+import org.springframework.security.oauth2.core.OAuth2TokenValidatorResult;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.JwtEncoder;
+import org.springframework.security.oauth2.jwt.JwtValidators;
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.security.oauth2.jwt.NimbusJwtEncoder;
 
@@ -45,7 +51,7 @@ public class JwtConfig {
     @Bean
     public JwtDecoder jwtDecoder(JwtProperties properties) {
         validate(properties);
-        return NimbusJwtDecoder.withPublicKey(
+        NimbusJwtDecoder decoder = NimbusJwtDecoder.withPublicKey(
                 publicKey(
                         loadPrivateKey(
                                 Path.of(
@@ -54,6 +60,22 @@ public class JwtConfig {
                         )
                 )
         ).build();
+        decoder.setJwtValidator(validator(properties.getIssuer()));
+        return decoder;
+    }
+
+    private OAuth2TokenValidator<Jwt> validator(String issuer) {
+        return new DelegatingOAuth2TokenValidator<>(
+                JwtValidators.createDefaultWithIssuer(issuer),
+                this::requireSubject
+        );
+    }
+
+    private OAuth2TokenValidatorResult requireSubject(Jwt token) {
+        if (token.getSubject() == null || token.getSubject().isBlank()) {
+            return OAuth2TokenValidatorResult.failure(new OAuth2Error("invalid_token"));
+        }
+        return OAuth2TokenValidatorResult.success();
     }
 
     private void validate(JwtProperties properties) {

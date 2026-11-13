@@ -1,0 +1,53 @@
+package ir.zango.auth.exception;
+
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ProblemDetail;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.web.AuthenticationEntryPoint;
+import org.springframework.security.web.access.AccessDeniedHandler;
+import org.springframework.stereotype.Component;
+import tools.jackson.databind.json.JsonMapper;
+
+import java.io.IOException;
+
+@Component
+@RequiredArgsConstructor
+public class AuthSecurityErrorHandler implements AuthenticationEntryPoint, AccessDeniedHandler {
+
+    private final AuthExceptionHandler authExceptionHandler;
+    private final JsonMapper jsonMapper;
+
+    @Override
+    public void commence(
+            HttpServletRequest request,
+            HttpServletResponse response,
+            AuthenticationException exception
+    ) throws IOException {
+        response.setHeader(HttpHeaders.WWW_AUTHENTICATE, "Bearer");
+        write(response, authExceptionHandler.create(AuthErrorCode.UNAUTHORIZED, request));
+    }
+
+    @Override
+    public void handle(
+            HttpServletRequest request,
+            HttpServletResponse response,
+            AccessDeniedException exception
+    ) throws IOException {
+        write(response, authExceptionHandler.create(AuthErrorCode.FORBIDDEN, request));
+    }
+
+    private void write(HttpServletResponse response, ProblemDetail problem) throws IOException {
+        if (response.isCommitted()) {
+            return;
+        }
+        response.setStatus(problem.getStatus());
+        response.setContentType(MediaType.APPLICATION_PROBLEM_JSON_VALUE);
+        response.setCharacterEncoding("UTF-8");
+        jsonMapper.writeValue(response.getOutputStream(), problem);
+    }
+}

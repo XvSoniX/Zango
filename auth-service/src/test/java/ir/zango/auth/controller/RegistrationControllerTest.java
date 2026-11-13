@@ -5,11 +5,13 @@ import ir.zango.auth.domain.enums.AccountStatusEnum;
 import ir.zango.auth.domain.enums.IdentifierTypeEnum;
 import ir.zango.auth.dto.RegistrationResponseDTO;
 import ir.zango.auth.exception.AuthExceptionHandler;
+import ir.zango.auth.exception.AuthSecurityErrorHandler;
 import ir.zango.auth.exception.DuplicateIdentifierException;
 import ir.zango.auth.service.RegistrationService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.context.MessageSourceAutoConfiguration;
+import org.springframework.boot.jackson.autoconfigure.JacksonAutoConfiguration;
 import org.springframework.boot.security.autoconfigure.web.servlet.ServletWebSecurityAutoConfiguration;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Import;
@@ -23,6 +25,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -32,8 +35,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
         SecurityConfig.class,
         JwtDecoderTestConfig.class,
         AuthExceptionHandler.class,
+        AuthSecurityErrorHandler.class,
         ServletWebSecurityAutoConfiguration.class,
-        MessageSourceAutoConfiguration.class
+        MessageSourceAutoConfiguration.class,
+        JacksonAutoConfiguration.class
 })
 class RegistrationControllerTest {
 
@@ -116,6 +121,25 @@ class RegistrationControllerTest {
     @Test
     void keepsOtherEndpointsAuthenticated() throws Exception {
         mockMvc.perform(post("/api/v1/auth/logout-all"))
-                .andExpect(status().isUnauthorized());
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.errorCode").value("UNAUTHORIZED"))
+                .andExpect(jsonPath("$.isSuccess").value(false));
+    }
+
+    @Test
+    void rejectsAnInvalidBearerToken() throws Exception {
+        mockMvc.perform(post("/api/v1/auth/logout-all")
+                        .header("Authorization", "Bearer not-a-token"))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.errorCode").value("UNAUTHORIZED"))
+                .andExpect(jsonPath("$.detail").value("برای دسترسی به این منبع باید وارد شوید."));
+    }
+
+    @Test
+    void forbidsANonAdminOnAdministrativeEndpoints() throws Exception {
+        mockMvc.perform(get("/api/v1/auth/admin/roles")
+                        .header("Authorization", "Bearer " + JwtDecoderTestConfig.USER_TOKEN))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.errorCode").value("FORBIDDEN"));
     }
 }

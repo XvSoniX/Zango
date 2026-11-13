@@ -23,6 +23,16 @@ public enum AuthErrorCode {
             "https://zango.ir/problems/authentication-failed"
     ),
 
+    UNAUTHORIZED(
+            HttpStatus.UNAUTHORIZED,
+            "https://zango.ir/problems/unauthorized"
+    ),
+
+    FORBIDDEN(
+            HttpStatus.FORBIDDEN,
+            "https://zango.ir/problems/forbidden"
+    ),
+
     NOT_FOUND(
             HttpStatus.NOT_FOUND,
             "https://zango.ir/problems/not-found"
