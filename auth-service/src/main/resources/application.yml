@@ -19,6 +19,13 @@ spring:
   liquibase:
     change-log: classpath:db/changelog/db.changelog-master.yaml
     default-schema: ${AUTH_DB_SCHEMA:public}
+  messages:
+    basename: i18n/messages
+    encoding: UTF-8
+    fallback-to-system-locale: false
+  jackson:
+    deserialization:
+      fail-on-unknown-properties: true
 
 eureka:
   instance:

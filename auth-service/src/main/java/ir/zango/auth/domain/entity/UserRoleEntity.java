@@ -42,4 +42,12 @@ public class UserRoleEntity {
     public void assignAssignedAt(Instant assignedAt) {
         this.assignedAt = assignedAt;
     }
+
+    public static UserRoleEntity create(UserEntity user, RoleEntity role, Instant assignedAt) {
+        UserRoleEntity userRole = new UserRoleEntity();
+        userRole.user = user;
+        userRole.role = role;
+        userRole.assignedAt = assignedAt;
+        return userRole;
+    }
 }

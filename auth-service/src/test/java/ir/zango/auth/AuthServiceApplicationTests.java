@@ -1,9 +1,8 @@
 package ir.zango.auth;
 
 import org.junit.jupiter.api.Test;
-import org.springframework.boot.test.context.SpringBootTest;
 
-@SpringBootTest
+@AuthSpringBootTest
 class AuthServiceApplicationTests {
 
     @Test

@@ -70,4 +70,23 @@ public class CredentialEntity {
     public void assignUpdatedAt(Instant updatedAt) {
         this.updatedAt = updatedAt;
     }
+
+    public static CredentialEntity create(
+            UserEntity user,
+            String identifier,
+            IdentifierTypeEnum identifierType,
+            String passwordHash,
+            boolean verified,
+            Instant timestamp
+    ) {
+        CredentialEntity credential = new CredentialEntity();
+        credential.user = user;
+        credential.identifier = identifier;
+        credential.identifierType = identifierType;
+        credential.passwordHash = passwordHash;
+        credential.verified = verified;
+        credential.createdAt = timestamp;
+        credential.updatedAt = timestamp;
+        return credential;
+    }
 }
