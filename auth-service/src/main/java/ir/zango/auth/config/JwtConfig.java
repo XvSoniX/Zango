@@ -9,7 +9,9 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.converter.RsaKeyConverters;
+import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.JwtEncoder;
+import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.security.oauth2.jwt.NimbusJwtEncoder;
 
 import java.io.IOException;
@@ -38,6 +40,20 @@ public class JwtConfig {
                 .algorithm(JWSAlgorithm.RS256)
                 .build();
         return new NimbusJwtEncoder(new ImmutableJWKSet<>(new JWKSet(signingKey)));
+    }
+
+    @Bean
+    public JwtDecoder jwtDecoder(JwtProperties properties) {
+        validate(properties);
+        return NimbusJwtDecoder.withPublicKey(
+                publicKey(
+                        loadPrivateKey(
+                                Path.of(
+                                        properties.getPrivateKeyPath()
+                                )
+                        )
+                )
+        ).build();
     }
 
     private void validate(JwtProperties properties) {

@@ -30,6 +30,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @WebMvcTest(RegistrationController.class)
 @Import({
         SecurityConfig.class,
+        JwtDecoderTestConfig.class,
         AuthExceptionHandler.class,
         ServletWebSecurityAutoConfiguration.class,
         MessageSourceAutoConfiguration.class
@@ -114,9 +115,7 @@ class RegistrationControllerTest {
 
     @Test
     void keepsOtherEndpointsAuthenticated() throws Exception {
-        mockMvc.perform(post("/api/v1/auth/login")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{}"))
-                .andExpect(status().isForbidden());
+        mockMvc.perform(post("/api/v1/auth/logout-all"))
+                .andExpect(status().isUnauthorized());
     }
 }

@@ -14,6 +14,13 @@ public record LoginResponseDTO(
         String accessToken,
         String tokenType,
         Instant expiresAt,
-        long expiresIn
+        long expiresIn,
+        String refreshToken,
+        Instant refreshExpiresAt
 ) {
+
+    @Override
+    public String toString() {
+        return "LoginResponseDTO[id=" + id + ", identifierType=" + identifierType + ", status=" + status + "]";
+    }
 }

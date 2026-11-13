@@ -13,7 +13,7 @@ public class JwtProperties {
 
     private String privateKeyPath = "./gateway-service/keys/private.pem";
     private String issuer = "https://zango.ir";
-    private Duration accessTokenTtl = Duration.ofHours(1);
+    private Duration accessTokenTtl = Duration.ofMinutes(15);
     private String keyId = "zango-auth-rs256-1";
 
 }
