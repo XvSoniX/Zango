@@ -57,6 +57,11 @@ logging:
 
 zango:
   auth:
+    jwt:
+      private-key-path: ${JWT_PRIVATE_KEY_PATH:./gateway-service/keys/private.pem}
+      issuer: ${JWT_ISSUER:https://zango.ir}
+      access-token-ttl: ${JWT_ACCESS_TOKEN_TTL:15m}
+      key-id: ${JWT_KEY_ID:zango-auth-rs256-1}
     database:
       host: ${AUTH_DB_HOST:}
       port: ${AUTH_DB_PORT:5432}

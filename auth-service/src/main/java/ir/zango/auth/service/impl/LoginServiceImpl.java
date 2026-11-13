@@ -8,6 +8,8 @@ import ir.zango.auth.dto.LoginRequestDTO;
 import ir.zango.auth.dto.LoginResponseDTO;
 import ir.zango.auth.exception.AuthenticationFailedException;
 import ir.zango.auth.repository.CredentialRepository;
+import ir.zango.auth.security.AccessToken;
+import ir.zango.auth.security.JwtAccessTokenGenerator;
 import ir.zango.auth.service.IdentifierNormalizer;
 import ir.zango.auth.service.LoginService;
 import jakarta.annotation.PostConstruct;
@@ -31,6 +33,7 @@ public class LoginServiceImpl implements LoginService {
 
     private final CredentialRepository credentialRepository;
     private final PasswordEncoder passwordEncoder;
+    private final JwtAccessTokenGenerator jwtAccessTokenGenerator;
     private String dummyPasswordHash;
 
     @PostConstruct
@@ -58,11 +61,16 @@ public class LoginServiceImpl implements LoginService {
         }
 
         UserEntity user = credential.getUser();
+        AccessToken accessToken = jwtAccessTokenGenerator.generate(user.getId());
         return new LoginResponseDTO(
                 user.getId(),
                 identifier,
                 identifierType,
-                user.getStatus()
+                user.getStatus(),
+                accessToken.value(),
+                "Bearer",
+                accessToken.expiresAt(),
+                accessToken.expiresInSeconds()
         );
     }
 
