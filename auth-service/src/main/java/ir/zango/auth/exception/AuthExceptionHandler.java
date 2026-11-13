@@ -76,6 +76,10 @@ public class AuthExceptionHandler {
         return problem(AuthErrorCode.BAD_REQUEST, request, List.of());
     }
 
+    public ProblemDetail create(AuthErrorCode errorCode, HttpServletRequest request) {
+        return problem(errorCode, request, List.of());
+    }
+
     private ProblemDetail problem(AuthErrorCode errorCode, HttpServletRequest request, List<FieldErrorDetailDTO> errors) {
         Locale locale = resolveLocale(request);
         String code = errorCode.name();
