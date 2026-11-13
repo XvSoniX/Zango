@@ -19,4 +19,6 @@ public interface UserRoleRepository extends JpaRepository<UserRoleEntity, UserRo
             order by role.name
             """)
     List<String> findRoleNamesByUserId(@Param("userId") UUID userId);
+
+    boolean existsByRole_Id(UUID roleId);
 }
