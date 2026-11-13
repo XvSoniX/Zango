@@ -1,0 +1,46 @@
+server:
+  port: ${AUTH_SERVICE_PORT:8081}
+
+spring:
+  application:
+    name: auth-service
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:dev}
+
+eureka:
+  instance:
+    prefer-ip-address: true
+    instance-id: ${spring.application.name}:${server.port}
+  client:
+    service-url:
+      defaultZone: ${EUREKA_SERVER_URL:http://root:toor123@localhost:8761/eureka/}
+    register-with-eureka: true
+    fetch-registry: true
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: never
+
+logging:
+  file:
+    name: logs/auth/auth-service.log
+  level:
+    root: ${AUTH_LOG_LEVEL:INFO}
+    ir.zango.auth: ${AUTH_LOG_LEVEL:INFO}
+    com.netflix.eureka: WARN
+    com.netflix.discovery: WARN
+
+zango:
+  auth:
+    database:
+      host: ${AUTH_DB_HOST:}
+      port: ${AUTH_DB_PORT:5432}
+      name: ${AUTH_DB_NAME:}
+      username: ${AUTH_DB_USERNAME:}
+      password: ${AUTH_DB_PASSWORD:}
+      schema: ${AUTH_DB_SCHEMA:}
