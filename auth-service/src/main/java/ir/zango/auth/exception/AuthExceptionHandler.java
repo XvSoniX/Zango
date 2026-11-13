@@ -43,6 +43,26 @@ public class AuthExceptionHandler {
         return problem(AuthErrorCode.INTERNAL_SERVER_ERROR, request, List.of());
     }
 
+    @ExceptionHandler({RoleNotFoundException.class, UserNotFoundException.class})
+    public ProblemDetail handleNotFound(HttpServletRequest request) {
+        return problem(AuthErrorCode.NOT_FOUND, request, List.of());
+    }
+
+    @ExceptionHandler(DuplicateRoleException.class)
+    public ProblemDetail handleDuplicateRole(HttpServletRequest request) {
+        return problem(AuthErrorCode.ROLE_CONFLICT, request, List.of());
+    }
+
+    @ExceptionHandler(DuplicateRoleAssignmentException.class)
+    public ProblemDetail handleDuplicateRoleAssignment(HttpServletRequest request) {
+        return problem(AuthErrorCode.ROLE_ASSIGNMENT_CONFLICT, request, List.of());
+    }
+
+    @ExceptionHandler(RoleInUseException.class)
+    public ProblemDetail handleRoleInUse(HttpServletRequest request) {
+        return problem(AuthErrorCode.ROLE_IN_USE, request, List.of());
+    }
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ProblemDetail handleValidation(MethodArgumentNotValidException exception, HttpServletRequest request) {
         List<FieldErrorDetailDTO> errors = exception.getBindingResult().getFieldErrors().stream()

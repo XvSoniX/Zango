@@ -39,7 +39,7 @@ public class JwtAccessTokenGenerator {
                 .issuedAt(issuedAt)
                 .expiresAt(expiresAt)
                 .id(UUID.randomUUID().toString())
-                .claim("roles", roles)
+                .claim(JwtRoleAuthoritiesConverter.ROLES_CLAIM, roles)
                 .build();
 
         String token = jwtEncoder.encode(

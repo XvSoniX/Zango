@@ -40,4 +40,12 @@ public class RoleEntity {
     public void assignCreatedAt(Instant createdAt) {
         this.createdAt = createdAt;
     }
+
+    public static RoleEntity create(String name, String description, Instant createdAt) {
+        RoleEntity role = new RoleEntity();
+        role.name = name;
+        role.description = description;
+        role.createdAt = createdAt;
+        return role;
+    }
 }

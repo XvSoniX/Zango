@@ -23,6 +23,26 @@ public enum AuthErrorCode {
             "https://zango.ir/problems/authentication-failed"
     ),
 
+    NOT_FOUND(
+            HttpStatus.NOT_FOUND,
+            "https://zango.ir/problems/not-found"
+    ),
+
+    ROLE_CONFLICT(
+            HttpStatus.CONFLICT,
+            "https://zango.ir/problems/role-conflict"
+    ),
+
+    ROLE_ASSIGNMENT_CONFLICT(
+            HttpStatus.CONFLICT,
+            "https://zango.ir/problems/role-assignment-conflict"
+    ),
+
+    ROLE_IN_USE(
+            HttpStatus.CONFLICT,
+            "https://zango.ir/problems/role-in-use"
+    ),
+
     INTERNAL_SERVER_ERROR(
             HttpStatus.INTERNAL_SERVER_ERROR,
             "https://zango.ir/problems/internal-server-error"
