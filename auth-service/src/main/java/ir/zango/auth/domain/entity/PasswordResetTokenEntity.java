@@ -55,4 +55,18 @@ public class PasswordResetTokenEntity {
     public void assignCreatedAt(Instant createdAt) {
         this.createdAt = createdAt;
     }
+
+    public static PasswordResetTokenEntity issue(
+            UserEntity user,
+            String tokenHash,
+            Instant expiresAt,
+            Instant createdAt
+    ) {
+        PasswordResetTokenEntity token = new PasswordResetTokenEntity();
+        token.user = user;
+        token.tokenHash = tokenHash;
+        token.expiresAt = expiresAt;
+        token.createdAt = createdAt;
+        return token;
+    }
 }

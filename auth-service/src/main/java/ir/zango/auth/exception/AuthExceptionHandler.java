@@ -63,6 +63,16 @@ public class AuthExceptionHandler {
         return problem(AuthErrorCode.ROLE_IN_USE, request, List.of());
     }
 
+    @ExceptionHandler(PasswordResetFailedException.class)
+    public ProblemDetail handlePasswordResetFailed(HttpServletRequest request) {
+        return problem(AuthErrorCode.PASSWORD_RESET_FAILED, request, List.of());
+    }
+
+    @ExceptionHandler(TooManyRequestsException.class)
+    public ProblemDetail handleTooManyRequests(HttpServletRequest request) {
+        return problem(AuthErrorCode.TOO_MANY_REQUESTS, request, List.of());
+    }
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ProblemDetail handleValidation(MethodArgumentNotValidException exception, HttpServletRequest request) {
         List<FieldErrorDetailDTO> errors = exception.getBindingResult().getFieldErrors().stream()
