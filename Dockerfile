@@ -1,6 +1,7 @@
 # One image per module. Build from the repository root:
 #   docker build --build-arg SERVICE=discovery-service --build-arg PORT=8761 -t zango-discovery .
 #   docker build --build-arg SERVICE=gateway-service --build-arg PORT=8080 -t zango-gateway .
+#   docker build --build-arg SERVICE=auth-service --build-arg PORT=8081 -t zango-auth .
 
 ARG SERVICE=gateway-service
 ARG PORT=8080
@@ -14,6 +15,7 @@ COPY .mvn .mvn
 COPY pom.xml ./
 COPY discovery-service/pom.xml discovery-service/pom.xml
 COPY gateway-service/pom.xml gateway-service/pom.xml
+COPY auth-service/pom.xml auth-service/pom.xml
 
 RUN chmod +x mvnw \
     && ./mvnw -B -ntp -pl "${SERVICE}" -am -DskipTests dependency:go-offline
