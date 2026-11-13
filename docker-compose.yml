@@ -32,6 +32,8 @@ services:
     depends_on:
       discovery-service:
         condition: service_healthy
+      auth-service:
+        condition: service_healthy
     environment:
       GATEWAY_PORT: "8080"
       EUREKA_USERNAME: ${EUREKA_USERNAME:-root}
@@ -55,6 +57,75 @@ services:
     networks:
       - zango
 
+  auth-db:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${AUTH_DB_NAME:-zango_auth}
+      POSTGRES_USER: ${AUTH_DB_USERNAME:-zango}
+      POSTGRES_PASSWORD: ${AUTH_DB_PASSWORD:-zango}
+    volumes:
+      - zango-auth-db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    networks:
+      - zango
+
+  auth-service:
+    build:
+      context: .
+      args:
+        SERVICE: auth-service
+        PORT: "8081"
+    image: zango-auth
+    restart: unless-stopped
+    stop_grace_period: 30s
+    depends_on:
+      discovery-service:
+        condition: service_healthy
+      auth-db:
+        condition: service_healthy
+    environment:
+      AUTH_SERVICE_PORT: "8081"
+      SERVER_SHUTDOWN: graceful
+      SPRING_LIFECYCLE_TIMEOUT_PER_SHUTDOWN_PHASE: 20s
+      EUREKA_SERVER_URL: http://${EUREKA_USERNAME:-root}:${EUREKA_PASSWORD:-toor123}@discovery-service:8761/eureka/
+      AUTH_DB_HOST: auth-db
+      AUTH_DB_PORT: "5432"
+      AUTH_DB_NAME: ${AUTH_DB_NAME:-zango_auth}
+      AUTH_DB_USERNAME: ${AUTH_DB_USERNAME:-zango}
+      AUTH_DB_PASSWORD: ${AUTH_DB_PASSWORD:-zango}
+      AUTH_DB_SCHEMA: ${AUTH_DB_SCHEMA:-public}
+      JWT_PRIVATE_KEY_PATH: /run/secrets/private.pem
+      JWT_ISSUER: ${JWT_ISSUER:-http://localhost:8081}
+      JWT_AUDIENCE: ${JWT_AUDIENCE:-zango}
+      JWT_ACCESS_TOKEN_TTL: ${JWT_ACCESS_TOKEN_TTL:-15m}
+      JWT_KEY_ID: ${JWT_KEY_ID:-zango-auth-rs256-1}
+      REFRESH_TOKEN_TTL: ${REFRESH_TOKEN_TTL:-24h}
+      PASSWORD_RESET_TTL: ${PASSWORD_RESET_TTL:-30m}
+      PASSWORD_RESET_RATE_LIMIT: ${PASSWORD_RESET_RATE_LIMIT:-5}
+      PASSWORD_RESET_RATE_LIMIT_WINDOW: ${PASSWORD_RESET_RATE_LIMIT_WINDOW:-15m}
+      LOGGING_FILE_NAME: ""
+    ports:
+      - "8081:8081"
+    volumes:
+      - ./gateway-service/keys/private.pem:/run/secrets/private.pem:ro
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:8081/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 90s
+    networks:
+      - zango
+
 networks:
   zango:
     name: zango
+
+volumes:
+  zango-auth-db:

@@ -26,6 +26,9 @@ gateway-service/mvnw
 gateway-service/mvnw.cmd
 gateway-service/.mvn
 gateway-service/keys
+auth-service/mvnw
+auth-service/mvnw.cmd
+auth-service/.mvn
 mvnw.cmd
 
 README.md
