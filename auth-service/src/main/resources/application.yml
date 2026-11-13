@@ -6,6 +6,9 @@ spring:
     name: auth-service
   profiles:
     active: ${SPRING_PROFILES_ACTIVE:dev}
+  jpa:
+    hibernate:
+      ddl-auto: none
 
 eureka:
   instance:
