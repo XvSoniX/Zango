@@ -12,8 +12,7 @@ import ir.zango.auth.service.AccountStatusRules;
 import ir.zango.auth.service.IssuedRefreshToken;
 import ir.zango.auth.service.RefreshTokenService;
 import lombok.RequiredArgsConstructor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -27,9 +26,9 @@ import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class RefreshTokenServiceImpl implements RefreshTokenService {
 
-    private static final Logger log = LoggerFactory.getLogger(RefreshTokenServiceImpl.class);
     private static final int TOKEN_BYTES = 32;
 
     private final RefreshTokenRepository refreshTokenRepository;
@@ -50,6 +49,7 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
                 .findByTokenHashForUpdate(hash(rawToken))
                 .orElse(null);
         if (current == null) {
+            log.warn("Refresh rejected because the token is unknown");
             throw new AuthenticationFailedException();
         }
 
@@ -57,16 +57,20 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
         if (current.getRevokedAt() != null) {
             if (current.getReplacedBy() != null) {
                 revokeFamily(current.getFamilyId(), now);
+            } else {
+                log.warn("Refresh rejected because the token is already revoked");
             }
             throw new AuthenticationFailedException();
         }
         if (!current.getExpiresAt().isAfter(now)) {
+            log.warn("Refresh rejected for user {} because the token is expired", current.getUser().getId());
             throw new AuthenticationFailedException();
         }
 
         UserEntity user = current.getUser();
         if (!AccountStatusRules.canAuthenticate(user)) {
             current.setRevokedAt(now);
+            log.warn("Refresh rejected for user {} because the account cannot authenticate", user.getId());
             throw new AuthenticationFailedException();
         }
 
@@ -75,6 +79,7 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
         current.setReplacedBy(issued.entity());
 
         AccessToken accessToken = jwtAccessTokenGenerator.generate(user.getId());
+        log.info("Rotated refresh token for user {}", user.getId());
         return new RefreshTokenResponseDTO(
                 accessToken.value(),
                 issued.value(),
@@ -90,15 +95,18 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
     public void logout(String rawToken) {
         RefreshTokenEntity token = refreshTokenRepository.findByTokenHash(hash(rawToken)).orElse(null);
         if (token == null || token.getRevokedAt() != null) {
+            log.debug("Logout ignored because the refresh token is unknown or already revoked");
             return;
         }
         token.setRevokedAt(Instant.now());
+        log.info("Revoked refresh token for user {}", token.getUser().getId());
     }
 
     @Override
     @Transactional
     public void logoutAll(UUID userId) {
         refreshTokenRepository.revokeActiveByUserId(userId, Instant.now());
+        log.info("Revoked active refresh tokens for user {}", userId);
     }
 
     private IssuedRefreshToken persist(UserEntity user, UUID familyId, Instant now) {
@@ -107,9 +115,13 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
         RefreshTokenEntity entity = refreshTokenRepository.saveAndFlush(
                 RefreshTokenEntity.issue(user, hash(rawToken), familyId, expiresAt, now)
         );
+        log.debug("Issued refresh token for user {}", user.getId());
         return new IssuedRefreshToken(rawToken, expiresAt, entity);
     }
 
+    /**
+     * Revokes the remaining live tokens after a rotated refresh token is presented again.
+     */
     private void revokeFamily(UUID familyId, Instant revokedAt) {
         refreshTokenRepository.revokeActiveByFamilyId(familyId, revokedAt);
         log.warn("Rotated refresh token reuse detected; active tokens in the family were revoked");
@@ -126,6 +138,7 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
             byte[] digest = MessageDigest.getInstance("SHA-256").digest(rawToken.getBytes(java.nio.charset.StandardCharsets.UTF_8));
             return HexFormat.of().formatHex(digest);
         } catch (NoSuchAlgorithmException exception) {
+            log.error("SHA-256 is not available", exception);
             throw new IllegalStateException("SHA-256 is not available", exception);
         }
     }

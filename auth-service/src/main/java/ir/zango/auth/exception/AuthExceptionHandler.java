@@ -2,8 +2,7 @@ package ir.zango.auth.exception;
 
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.MessageSource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ProblemDetail;
@@ -19,11 +18,10 @@ import java.util.UUID;
 
 @RestControllerAdvice
 @RequiredArgsConstructor
+@Slf4j
 public class AuthExceptionHandler {
 
     static final String CORRELATION_ID = "X-Correlation-ID";
-
-    private static final Logger log = LoggerFactory.getLogger(AuthExceptionHandler.class);
 
     private final MessageSource messageSource;
 

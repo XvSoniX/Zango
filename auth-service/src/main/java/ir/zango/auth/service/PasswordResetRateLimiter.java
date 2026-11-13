@@ -1,6 +1,7 @@
 package ir.zango.auth.service;
 
 import ir.zango.auth.config.PasswordResetProperties;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.nio.charset.StandardCharsets;
@@ -12,6 +13,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 
 @Component
+@Slf4j
 public class PasswordResetRateLimiter {
 
     private final PasswordResetProperties properties;
@@ -22,6 +24,9 @@ public class PasswordResetRateLimiter {
         this.properties = properties;
     }
 
+    /**
+     * Counts attempts for the current window. The email itself is not retained; the key is its SHA-256 hash.
+     */
     public boolean allow(String normalizedEmail) {
         long window = Instant.now().toEpochMilli() / properties.getRateLimitWindow().toMillis();
         if (activeWindow.get() != window) {
@@ -41,6 +46,7 @@ public class PasswordResetRateLimiter {
             byte[] digest = MessageDigest.getInstance("SHA-256").digest(value.getBytes(StandardCharsets.UTF_8));
             return HexFormat.of().formatHex(digest);
         } catch (NoSuchAlgorithmException exception) {
+            log.error("SHA-256 is not available", exception);
             throw new IllegalStateException("SHA-256 is not available", exception);
         }
     }

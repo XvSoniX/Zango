@@ -16,6 +16,9 @@ public final class AccountStatusRules {
     private AccountStatusRules() {
     }
 
+    /**
+     * A user can sign in only while the account is active or pending verification and has not been deleted.
+     */
     public static boolean canAuthenticate(UserEntity user) {
         return user != null
                 && user.getDeletedAt() == null
