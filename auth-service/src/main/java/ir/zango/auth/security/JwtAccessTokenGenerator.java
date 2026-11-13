@@ -36,6 +36,7 @@ public class JwtAccessTokenGenerator {
         JwtClaimsSet claims = JwtClaimsSet.builder()
                 .subject(userId.toString())
                 .issuer(jwtProperties.getIssuer())
+                .audience(List.of(jwtProperties.getAudience()))
                 .issuedAt(issuedAt)
                 .expiresAt(expiresAt)
                 .id(UUID.randomUUID().toString())

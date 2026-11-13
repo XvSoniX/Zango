@@ -59,7 +59,8 @@ zango:
   auth:
     jwt:
       private-key-path: ${JWT_PRIVATE_KEY_PATH:./gateway-service/keys/private.pem}
-      issuer: ${JWT_ISSUER:https://zango.ir}
+      issuer: ${JWT_ISSUER:http://localhost:8081}
+      audience: ${JWT_AUDIENCE:zango}
       access-token-ttl: ${JWT_ACCESS_TOKEN_TTL:15m}
       key-id: ${JWT_KEY_ID:zango-auth-rs256-1}
     refresh-token:

@@ -11,42 +11,42 @@ public enum GatewayErrorCode {
 
     BAD_REQUEST(
             HttpStatus.BAD_REQUEST,
-            "https://zango.ir/problems/bad-request"
+            "http://localhost/problems/bad-request"
     ),
 
     UNAUTHORIZED(
             HttpStatus.UNAUTHORIZED,
-            "https://zango.ir/problems/unauthorized"
+            "http://localhost/problems/unauthorized"
     ),
 
     FORBIDDEN(
             HttpStatus.FORBIDDEN,
-            "https://zango.ir/problems/forbidden"
+            "http://localhost/problems/forbidden"
     ),
 
     ROUTE_NOT_FOUND(
             HttpStatus.NOT_FOUND,
-            "https://zango.ir/problems/route-not-found"
+            "http://localhost/problems/route-not-found"
     ),
 
     BAD_GATEWAY(
             HttpStatus.BAD_GATEWAY,
-            "https://zango.ir/problems/bad-gateway"
+            "http://localhost/problems/bad-gateway"
     ),
 
     SERVICE_UNAVAILABLE(
             HttpStatus.SERVICE_UNAVAILABLE,
-            "https://zango.ir/problems/service-unavailable"
+            "http://localhost/problems/service-unavailable"
     ),
 
     GATEWAY_TIMEOUT(
             HttpStatus.GATEWAY_TIMEOUT,
-            "https://zango.ir/problems/gateway-timeout"
+            "http://localhost/problems/gateway-timeout"
     ),
 
     INTERNAL_SERVER_ERROR(
             HttpStatus.INTERNAL_SERVER_ERROR,
-            "https://zango.ir/problems/internal-server-error"
+            "http://localhost/problems/internal-server-error"
     );
 
     private final HttpStatus status;

@@ -10,62 +10,62 @@ public enum AuthErrorCode {
 
     BAD_REQUEST(
             HttpStatus.BAD_REQUEST,
-            "https://zango.ir/problems/bad-request"
+            "http://localhost/problems/bad-request"
     ),
 
     IDENTIFIER_CONFLICT(
             HttpStatus.CONFLICT,
-            "https://zango.ir/problems/identifier-conflict"
+            "http://localhost/problems/identifier-conflict"
     ),
 
     AUTHENTICATION_FAILED(
             HttpStatus.UNAUTHORIZED,
-            "https://zango.ir/problems/authentication-failed"
+            "http://localhost/problems/authentication-failed"
     ),
 
     UNAUTHORIZED(
             HttpStatus.UNAUTHORIZED,
-            "https://zango.ir/problems/unauthorized"
+            "http://localhost/problems/unauthorized"
     ),
 
     FORBIDDEN(
             HttpStatus.FORBIDDEN,
-            "https://zango.ir/problems/forbidden"
+            "http://localhost/problems/forbidden"
     ),
 
     NOT_FOUND(
             HttpStatus.NOT_FOUND,
-            "https://zango.ir/problems/not-found"
+            "http://localhost/problems/not-found"
     ),
 
     ROLE_CONFLICT(
             HttpStatus.CONFLICT,
-            "https://zango.ir/problems/role-conflict"
+            "http://localhost/problems/role-conflict"
     ),
 
     ROLE_ASSIGNMENT_CONFLICT(
             HttpStatus.CONFLICT,
-            "https://zango.ir/problems/role-assignment-conflict"
+            "http://localhost/problems/role-assignment-conflict"
     ),
 
     ROLE_IN_USE(
             HttpStatus.CONFLICT,
-            "https://zango.ir/problems/role-in-use"
+            "http://localhost/problems/role-in-use"
     ),
 
     PASSWORD_RESET_FAILED(
             HttpStatus.BAD_REQUEST,
-            "https://zango.ir/problems/password-reset-failed"
+            "http://localhost/problems/password-reset-failed"
     ),
 
     TOO_MANY_REQUESTS(
             HttpStatus.TOO_MANY_REQUESTS,
-            "https://zango.ir/problems/too-many-requests"
+            "http://localhost/problems/too-many-requests"
     ),
 
     INTERNAL_SERVER_ERROR(
             HttpStatus.INTERNAL_SERVER_ERROR,
-            "https://zango.ir/problems/internal-server-error"
+            "http://localhost/problems/internal-server-error"
     );
 
     private final HttpStatus status;
