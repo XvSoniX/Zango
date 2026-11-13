@@ -14,6 +14,7 @@ import ir.zango.auth.repository.CredentialRepository;
 import ir.zango.auth.repository.RoleRepository;
 import ir.zango.auth.repository.UserRepository;
 import ir.zango.auth.repository.UserRoleRepository;
+import ir.zango.auth.service.IdentifierNormalizer;
 import ir.zango.auth.service.RegistrationService;
 import lombok.RequiredArgsConstructor;
 import org.hibernate.exception.ConstraintViolationException;
@@ -24,7 +25,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.sql.SQLException;
 import java.time.Instant;
-import java.util.Locale;
 
 @Service
 @RequiredArgsConstructor
@@ -43,7 +43,7 @@ public class RegistrationServiceImpl implements RegistrationService {
     @Transactional
     public RegistrationResponseDTO register(RegistrationRequestDTO request) {
         IdentifierTypeEnum identifierType = request.identifierType();
-        String identifier = normalize(request.identifier(), identifierType);
+        String identifier = IdentifierNormalizer.normalize(request.identifier(), identifierType);
 
         if (credentialRepository.findByIdentifierTypeAndIdentifier(identifierType, identifier).isPresent()) {
             throw new DuplicateIdentifierException();
@@ -78,14 +78,6 @@ public class RegistrationServiceImpl implements RegistrationService {
         userRoleRepository.saveAndFlush(UserRoleEntity.create(user, role, now));
 
         return new RegistrationResponseDTO(user.getId(), identifier, identifierType, user.getStatus());
-    }
-
-    private String normalize(String identifier, IdentifierTypeEnum identifierType) {
-        String normalized = identifier.trim();
-        if (identifierType == IdentifierTypeEnum.EMAIL) {
-            return normalized.toLowerCase(Locale.ROOT);
-        }
-        return normalized;
     }
 
     private boolean isDuplicateIdentifier(DataIntegrityViolationException exception) {

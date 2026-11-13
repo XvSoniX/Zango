@@ -5,7 +5,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
-@ValidRegistrationIdentifier
+@ValidIdentifier
 public record RegistrationRequestDTO (
         @NotBlank(message = "{registration.identifier.required}")
         @Size(max = 255, message = "{registration.identifier.size}")
@@ -17,7 +17,7 @@ public record RegistrationRequestDTO (
         @NotBlank(message = "{registration.password.required}")
         @Size(max = 128, message = "{registration.password.size}")
         String password
-) {
+) implements IdentifierDTO {
 
     @Override
     public String toString() {
