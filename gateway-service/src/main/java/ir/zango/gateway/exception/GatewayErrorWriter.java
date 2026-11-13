@@ -57,7 +57,7 @@ public class GatewayErrorWriter {
                 )
         );
 
-        problemDetail.setProperty("success", false);
+        problemDetail.setProperty("isSuccess", false);
         problemDetail.setProperty("errorCode", code);
         problemDetail.setProperty("correlationId", UUID.randomUUID().toString());
 

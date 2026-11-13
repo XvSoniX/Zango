@@ -51,4 +51,12 @@ public class UserEntity {
     public void assignUpdatedAt(Instant updatedAt) {
         this.updatedAt = updatedAt;
     }
+
+    public static UserEntity create(AccountStatusEnum status, Instant timestamp) {
+        UserEntity user = new UserEntity();
+        user.status = status;
+        user.createdAt = timestamp;
+        user.updatedAt = timestamp;
+        return user;
+    }
 }
