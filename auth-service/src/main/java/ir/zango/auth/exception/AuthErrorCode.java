@@ -18,6 +18,11 @@ public enum AuthErrorCode {
             "https://zango.ir/problems/identifier-conflict"
     ),
 
+    AUTHENTICATION_FAILED(
+            HttpStatus.UNAUTHORIZED,
+            "https://zango.ir/problems/authentication-failed"
+    ),
+
     INTERNAL_SERVER_ERROR(
             HttpStatus.INTERNAL_SERVER_ERROR,
             "https://zango.ir/problems/internal-server-error"

@@ -5,18 +5,13 @@ import jakarta.validation.ConstraintValidatorContext;
 
 import java.util.regex.Pattern;
 
-public class RegistrationIdentifierValidator implements ConstraintValidator<ValidRegistrationIdentifier, RegistrationRequestDTO> {
+public class IdentifierValidator implements ConstraintValidator<ValidIdentifier, IdentifierDTO> {
 
     private static final Pattern EMAIL = Pattern.compile("^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$");
 
     @Override
-    public boolean isValid(
-            RegistrationRequestDTO request,
-            ConstraintValidatorContext context
-    ) {
-        if (
-                request == null || request.identifier() == null || request.identifierType() == null
-        ) {
+    public boolean isValid(IdentifierDTO request, ConstraintValidatorContext context) {
+        if (request == null || request.identifier() == null || request.identifierType() == null) {
             return true;
         }
 

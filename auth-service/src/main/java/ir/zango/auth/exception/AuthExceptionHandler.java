@@ -27,6 +27,11 @@ public class AuthExceptionHandler {
 
     private final MessageSource messageSource;
 
+    @ExceptionHandler(AuthenticationFailedException.class)
+    public ProblemDetail handleAuthenticationFailed(HttpServletRequest request) {
+        return problem(AuthErrorCode.AUTHENTICATION_FAILED, request, List.of());
+    }
+
     @ExceptionHandler(DuplicateIdentifierException.class)
     public ProblemDetail handleDuplicateIdentifier(HttpServletRequest request) {
         return problem(AuthErrorCode.IDENTIFIER_CONFLICT, request, List.of());

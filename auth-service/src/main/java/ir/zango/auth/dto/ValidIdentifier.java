@@ -12,8 +12,8 @@ import java.lang.annotation.Target;
 @Documented
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
-@Constraint(validatedBy = RegistrationIdentifierValidator.class)
-public @interface ValidRegistrationIdentifier {
+@Constraint(validatedBy = IdentifierValidator.class)
+public @interface ValidIdentifier {
 
     String message() default "{registration.identifier.invalid}";
 
