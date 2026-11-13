@@ -1,0 +1,29 @@
+databaseChangeLog:
+  - changeSet:
+      id: 007-seed-system-roles
+      author: zango
+      changes:
+        - insert:
+            tableName: roles
+            columns:
+              - column:
+                  name: id
+                  value: 6f1c0a3e-7b2d-4e91-9c4a-1d8e5a0b2f11
+              - column:
+                  name: name
+                  value: ROLE_ADMIN
+              - column:
+                  name: created_at
+                  valueComputed: CURRENT_TIMESTAMP
+        - insert:
+            tableName: roles
+            columns:
+              - column:
+                  name: id
+                  value: 8a4d2c1b-5e6f-4a70-8b9c-3d2e1f0a4b22
+              - column:
+                  name: name
+                  value: ROLE_USER
+              - column:
+                  name: created_at
+                  valueComputed: CURRENT_TIMESTAMP
