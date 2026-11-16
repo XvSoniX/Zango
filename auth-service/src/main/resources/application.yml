@@ -58,7 +58,7 @@ logging:
 zango:
   auth:
     jwt:
-      private-key-path: ${JWT_PRIVATE_KEY_PATH:./gateway-service/keys/private.pem}
+      private-key-path: ${JWT_PRIVATE_KEY_PATH:./auth-service/keys/private.pem}
       issuer: ${JWT_ISSUER:http://localhost:8081}
       audience: ${JWT_AUDIENCE:zango}
       access-token-ttl: ${JWT_ACCESS_TOKEN_TTL:15m}
