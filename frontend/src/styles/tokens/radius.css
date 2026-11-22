@@ -1,0 +1,23 @@
+/* ==========================================================================
+   Design Tokens: Border Radius
+   Centralized radius scale derived harmonically from baseline --radius.
+   Compatible with Shadcn/ui and custom UI component specifications.
+   ========================================================================== */
+
+:root {
+  /* Base Radius (Default for Shadcn/ui) */
+  --radius: 0.625rem; /* 10px */
+
+  /* Derived Scales */
+  --radius-none: 0px;
+  --radius-2xs: calc(var(--radius) * 0.4);
+  --radius-xs: calc(var(--radius) * 0.5);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
+  --radius-full: 9999px;
+}
