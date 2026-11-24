@@ -35,15 +35,15 @@ ARG PORT=8080
 RUN apt-get update \
     && apt-get install -y --no-install-recommends curl \
     && rm -rf /var/lib/apt/lists/* \
-    && groupadd --system --gid 10001 zango \
-    && useradd --system --uid 10001 --gid zango --home-dir /app --shell /usr/sbin/nologin zango \
+    && groupadd --system --gid 10001 nextminds \
+    && useradd --system --uid 10001 --gid nextminds --home-dir /app --shell /usr/sbin/nologin nextminds \
     && mkdir -p /app \
-    && chown zango:zango /app
+    && chown nextminds:nextminds /app
 
 WORKDIR /app
-COPY --from=build --chown=zango:zango /src/app.jar /app/app.jar
+COPY --from=build --chown=nextminds:nextminds /src/app.jar /app/app.jar
 
-USER zango
+USER nextminds
 EXPOSE ${PORT}
 ENV JAVA_TOOL_OPTIONS="-XX:MaxRAMPercentage=75.0"
 ENTRYPOINT ["java", "-jar", "/app/app.jar"]

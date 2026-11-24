@@ -1,11 +1,11 @@
 # Deployment
 
-One Dockerfile at the repository root builds every service. The image uses a JDK stage for Maven and a JRE stage at runtime. The process runs as the non-root user `zango`.
+One Dockerfile at the repository root builds every service. The image uses a JDK stage for Maven and a JRE stage at runtime. The process runs as the non-root user `nextminds`.
 
 ```bash
-docker build --build-arg SERVICE=discovery-service --build-arg PORT=8761 -t zango-discovery .
-docker build --build-arg SERVICE=gateway-service --build-arg PORT=8080 -t zango-gateway .
-docker build --build-arg SERVICE=auth-service --build-arg PORT=8081 -t zango-auth .
+docker build --build-arg SERVICE=discovery-service --build-arg PORT=8761 -t nextminds-discovery .
+docker build --build-arg SERVICE=gateway-service --build-arg PORT=8080 -t nextminds-gateway .
+docker build --build-arg SERVICE=auth-service --build-arg PORT=8081 -t nextminds-auth .
 ```
 
 Compose builds the same images:
@@ -35,7 +35,7 @@ Health checks call `GET /actuator/health` on Discovery, the gateway, and Auth. P
 | Gateway | Eureka | `http://discovery-service:8761/eureka/` |
 | Gateway | Auth | `lb://AUTH-SERVICE` |
 
-Host ports are `8761`, `8080`, and `8081`. PostgreSQL stays on the Docker network. Its data is the named volume `zango-auth-db`.
+Host ports are `8761`, `8080`, and `8081`. PostgreSQL stays on the Docker network. Its data is the named volume `nextminds-auth-db`.
 
 Database name, user, and password come from `AUTH_DB_NAME`, `AUTH_DB_USERNAME`, and `AUTH_DB_PASSWORD`. Compose defaults are the local values in `.env.example`. Override them outside development.
 

@@ -1,0 +1,26 @@
+package ir.nextminds.auth.dto;
+
+import ir.nextminds.auth.domain.enums.AccountStatusEnum;
+import ir.nextminds.auth.domain.enums.IdentifierTypeEnum;
+
+import java.time.Instant;
+import java.util.UUID;
+
+public record LoginResponseDTO(
+        UUID id,
+        String identifier,
+        IdentifierTypeEnum identifierType,
+        AccountStatusEnum status,
+        String accessToken,
+        String tokenType,
+        Instant expiresAt,
+        long expiresIn,
+        String refreshToken,
+        Instant refreshExpiresAt
+) {
+
+    @Override
+    public String toString() {
+        return "LoginResponseDTO[id=" + id + ", identifierType=" + identifierType + ", status=" + status + "]";
+    }
+}

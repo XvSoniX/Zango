@@ -1,7 +1,7 @@
 databaseChangeLog:
   - changeSet:
       id: 007-seed-system-roles
-      author: zango
+      author: nextminds
       changes:
         - insert:
             tableName: roles

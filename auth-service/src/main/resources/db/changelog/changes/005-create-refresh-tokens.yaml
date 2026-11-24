@@ -1,7 +1,7 @@
 databaseChangeLog:
   - changeSet:
       id: 005-create-refresh-tokens
-      author: zango
+      author: nextminds
       changes:
         - createTable:
             tableName: refresh_tokens

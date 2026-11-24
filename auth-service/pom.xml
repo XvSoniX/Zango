@@ -6,14 +6,14 @@
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
-        <groupId>ir.zango</groupId>
-        <artifactId>zango</artifactId>
+        <groupId>ir.nextminds</groupId>
+        <artifactId>nextminds</artifactId>
         <version>0.0.1-SNAPSHOT</version>
     </parent>
 
     <artifactId>auth-service</artifactId>
     <name>auth-service</name>
-    <description>Authentication Service for Zango</description>
+    <description>Authentication Service for NextMinds</description>
 
     <dependencies>
         <dependency>

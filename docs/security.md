@@ -10,7 +10,7 @@ Access tokens are RS256 JWTs and live for 15 minutes.
 | --- | --- |
 | `sub` | User id |
 | `iss` | `JWT_ISSUER`, default `http://localhost:8081` |
-| `aud` | `JWT_AUDIENCE`, default `zango` |
+| `aud` | `JWT_AUDIENCE`, default `nextminds` |
 | `exp` / `iat` | Issued-at and expiry |
 | `jti` | Unique token id |
 | `roles` | Role names loaded from the database at issuance |
@@ -35,7 +35,7 @@ Reset tokens are 32 random bytes, stored as SHA-256, and valid for 30 minutes. I
 
 ## Authorization rules
 
-Gateway rules live in `gateway-service/src/main/resources/application.yml` under `zango.gateway.security.rules`. They are applied in order. The fallback is authenticated.
+Gateway rules live in `gateway-service/src/main/resources/application.yml` under `nextminds.gateway.security.rules`. They are applied in order. The fallback is authenticated.
 
 | Access | Meaning |
 | --- | --- |
@@ -52,7 +52,7 @@ Sessions are stateless. CSRF, HTTP Basic, and form login are disabled on Auth.
 Nothing in the API can grant the first `ROLE_ADMIN`, because that API itself requires the role. For a local database:
 
 ```bash
-docker compose exec auth-db psql -U zango -d zango_auth -c "
+docker compose exec auth-db psql -U nextminds -d nextminds_auth -c "
 INSERT INTO user_roles (user_id, role_id, assigned_at)
 VALUES ('<user-id>', '6f1c0a3e-7b2d-4e91-9c4a-1d8e5a0b2f11', now());
 "
@@ -63,7 +63,7 @@ VALUES ('<user-id>', '6f1c0a3e-7b2d-4e91-9c4a-1d8e5a0b2f11', now());
 To mark the account active:
 
 ```bash
-docker compose exec auth-db psql -U zango -d zango_auth -c "
+docker compose exec auth-db psql -U nextminds -d nextminds_auth -c "
 UPDATE users
 SET status = 'ACTIVE', updated_at = now()
 WHERE id = '<user-id>';

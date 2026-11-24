@@ -5,7 +5,7 @@ services:
       args:
         SERVICE: discovery-service
         PORT: "${DISCOVERY_PORT:-8761}"
-    image: zango-discovery
+    image: nextminds-discovery
     environment:
       EUREKA_HOSTNAME: discovery-service
       EUREKA_USERNAME: ${EUREKA_USERNAME:-root}
@@ -20,7 +20,7 @@ services:
       retries: 5
       start_period: 60s
     networks:
-      - zango
+      - nextminds
 
   gateway-service:
     build:
@@ -28,7 +28,7 @@ services:
       args:
         SERVICE: gateway-service
         PORT: "${GATEWAY_PORT:-8080}"
-    image: zango-gateway
+    image: nextminds-gateway
     depends_on:
       discovery-service:
         condition: service_healthy
@@ -41,7 +41,7 @@ services:
       EUREKA_SERVER_URL: http://${EUREKA_USERNAME:-root}:${EUREKA_PASSWORD:-toor123}@discovery-service:${DISCOVERY_PORT:-8761}/eureka/
       JWT_PUBLIC_KEY_PATH: /run/secrets/public.pem
       JWT_ISSUER: ${JWT_ISSUER:-http://localhost:8081}
-      JWT_AUDIENCE: ${JWT_AUDIENCE:-zango}
+      JWT_AUDIENCE: ${JWT_AUDIENCE:-nextminds}
       FRONTEND_URL: ${FRONTEND_URL:-http://localhost:3000}
       LOGGING_FILE_NAME: ""
     ports:
@@ -55,17 +55,17 @@ services:
       retries: 5
       start_period: 60s
     networks:
-      - zango
+      - nextminds
 
   auth-db:
     image: postgres:16
     restart: unless-stopped
     environment:
-      POSTGRES_DB: ${AUTH_DB_NAME:-zango_auth}
-      POSTGRES_USER: ${AUTH_DB_USERNAME:-zango}
-      POSTGRES_PASSWORD: ${AUTH_DB_PASSWORD:-zango}
+      POSTGRES_DB: ${AUTH_DB_NAME:-nextminds_auth}
+      POSTGRES_USER: ${AUTH_DB_USERNAME:-nextminds}
+      POSTGRES_PASSWORD: ${AUTH_DB_PASSWORD:-nextminds}
     volumes:
-      - zango-auth-db:/var/lib/postgresql/data
+      - nextminds-auth-db:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
       interval: 10s
@@ -73,7 +73,7 @@ services:
       retries: 5
       start_period: 20s
     networks:
-      - zango
+      - nextminds
 
   auth-service:
     build:
@@ -81,7 +81,7 @@ services:
       args:
         SERVICE: auth-service
         PORT: "${AUTH_SERVICE_PORT:-8081}"
-    image: zango-auth
+    image: nextminds-auth
     restart: unless-stopped
     stop_grace_period: 30s
     depends_on:
@@ -96,15 +96,15 @@ services:
       EUREKA_SERVER_URL: http://${EUREKA_USERNAME:-root}:${EUREKA_PASSWORD:-toor123}@discovery-service:${DISCOVERY_PORT:-8761}/eureka/
       AUTH_DB_HOST: auth-db
       AUTH_DB_PORT: "5432"
-      AUTH_DB_NAME: ${AUTH_DB_NAME:-zango_auth}
-      AUTH_DB_USERNAME: ${AUTH_DB_USERNAME:-zango}
-      AUTH_DB_PASSWORD: ${AUTH_DB_PASSWORD:-zango}
+      AUTH_DB_NAME: ${AUTH_DB_NAME:-nextminds_auth}
+      AUTH_DB_USERNAME: ${AUTH_DB_USERNAME:-nextminds}
+      AUTH_DB_PASSWORD: ${AUTH_DB_PASSWORD:-nextminds}
       AUTH_DB_SCHEMA: ${AUTH_DB_SCHEMA:-public}
       JWT_PRIVATE_KEY_PATH: /run/secrets/private.pem
       JWT_ISSUER: ${JWT_ISSUER:-http://localhost:8081}
-      JWT_AUDIENCE: ${JWT_AUDIENCE:-zango}
+      JWT_AUDIENCE: ${JWT_AUDIENCE:-nextminds}
       JWT_ACCESS_TOKEN_TTL: ${JWT_ACCESS_TOKEN_TTL:-15m}
-      JWT_KEY_ID: ${JWT_KEY_ID:-zango-auth-rs256-1}
+      JWT_KEY_ID: ${JWT_KEY_ID:-nextminds-auth-rs256-1}
       REFRESH_TOKEN_TTL: ${REFRESH_TOKEN_TTL:-24h}
       PASSWORD_RESET_TTL: ${PASSWORD_RESET_TTL:-30m}
       PASSWORD_RESET_RATE_LIMIT: ${PASSWORD_RESET_RATE_LIMIT:-5}
@@ -121,11 +121,67 @@ services:
       retries: 5
       start_period: 90s
     networks:
-      - zango
+      - nextminds
+
+  user-db:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${USER_DB_NAME:-nextminds_user}
+      POSTGRES_USER: ${USER_DB_USERNAME:-nextminds}
+      POSTGRES_PASSWORD: ${USER_DB_PASSWORD:-nextminds}
+    volumes:
+      - nextminds-user-db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    networks:
+      - nextminds
+
+  user-service:
+    build:
+      context: .
+      args:
+        SERVICE: user-service
+        PORT: "${USER_SERVICE_PORT:-8082}"
+    image: nextminds-user
+    restart: unless-stopped
+    stop_grace_period: 30s
+    depends_on:
+      discovery-service:
+        condition: service_healthy
+      user-db:
+        condition: service_healthy
+    environment:
+      USER_SERVICE_PORT: "${USER_SERVICE_PORT:-8082}"
+      SERVER_SHUTDOWN: graceful
+      SPRING_LIFECYCLE_TIMEOUT_PER_SHUTDOWN_PHASE: 20s
+      EUREKA_SERVER_URL: http://${EUREKA_USERNAME:-root}:${EUREKA_PASSWORD:-toor123}@discovery-service:${DISCOVERY_PORT:-8761}/eureka/
+      USER_DB_HOST: user-db
+      USER_DB_PORT: "5432"
+      USER_DB_NAME: ${USER_DB_NAME:-nextminds_user}
+      USER_DB_USERNAME: ${USER_DB_USERNAME:-nextminds}
+      USER_DB_PASSWORD: ${USER_DB_PASSWORD:-nextminds}
+      USER_DB_SCHEMA: ${USER_DB_SCHEMA:-public}
+      LOGGING_FILE_NAME: ""
+    ports:
+      - "${USER_SERVICE_PORT:-8082}:${USER_SERVICE_PORT:-8082}"
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:${USER_SERVICE_PORT:-8082}/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 90s
+    networks:
+      - nextminds
 
 networks:
-  zango:
-    name: zango
+  nextminds:
+    name: nextminds
 
 volumes:
-  zango-auth-db:
+  nextminds-auth-db:
+  nextminds-user-db:

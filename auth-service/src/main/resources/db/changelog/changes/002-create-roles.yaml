@@ -1,7 +1,7 @@
 databaseChangeLog:
   - changeSet:
       id: 002-create-roles
-      author: zango
+      author: nextminds
       changes:
         - createTable:
             tableName: roles
