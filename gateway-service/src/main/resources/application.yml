@@ -60,6 +60,10 @@ spring:
               uri: lb://AUTH-SERVICE
               predicates:
                 - Path=/api/v1/auth/**
+            - id: user-service
+              uri: lb://USER-SERVICE
+              predicates:
+                - Path=/api/v1/users/**
 
   security:
     oauth2:
@@ -69,13 +73,13 @@ spring:
           jws-algorithms:
             - RS256
           audiences:
-            - ${JWT_AUDIENCE:zango}
+            - ${JWT_AUDIENCE:nextminds}
   messages:
     basename: i18n/messages
     encoding: UTF-8
     fallback-to-system-locale: false
 
-zango:
+nextminds:
   jwt:
     issuer: ${JWT_ISSUER:http://localhost:8081}
   gateway:

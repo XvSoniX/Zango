@@ -1,7 +1,7 @@
 databaseChangeLog:
   - changeSet:
       id: 001-create-users
-      author: zango
+      author: nextminds
       changes:
         - createTable:
             tableName: users

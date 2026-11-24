@@ -1,6 +1,6 @@
 # Architecture
 
-Zango runs as three Spring Boot services on one Docker network named `zango`.
+NextMinds runs as three Spring Boot services on one Docker network named `nextminds`.
 
 ```text
 client
@@ -36,7 +36,7 @@ Auth registers in Eureka as `AUTH-SERVICE`.
 
 ## Request path
 
-1. The gateway matches `zango.gateway.security.rules` in order.
+1. The gateway matches `nextminds.gateway.security.rules` in order.
 2. Public routes skip authentication. Everything else needs a valid access token. Admin routes also need `ROLE_ADMIN`.
 3. A request that fails validation never reaches Auth.
 4. A request that passes is forwarded with its `Authorization` header.
@@ -52,7 +52,7 @@ Discovery stores no business data.
 
 ## Data
 
-Auth uses one PostgreSQL database, `zango_auth`, schema `public`. Hibernate validates the schema. Liquibase applies it from `auth-service/src/main/resources/db/changelog`.
+Auth uses one PostgreSQL database, `nextminds_auth`, schema `public`. Hibernate validates the schema. Liquibase applies it from `auth-service/src/main/resources/db/changelog`.
 
 Tables:
 

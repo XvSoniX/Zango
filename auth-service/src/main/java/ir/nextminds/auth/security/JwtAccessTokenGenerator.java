@@ -1,0 +1,65 @@
+package ir.nextminds.auth.security;
+
+import ir.nextminds.auth.config.JwtProperties;
+import ir.nextminds.auth.repository.UserRoleRepository;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.oauth2.jose.jws.SignatureAlgorithm;
+import org.springframework.security.oauth2.jwt.JwsHeader;
+import org.springframework.security.oauth2.jwt.JwtClaimsSet;
+import org.springframework.security.oauth2.jwt.JwtEncoder;
+import org.springframework.security.oauth2.jwt.JwtEncoderParameters;
+import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.time.Instant;
+import java.util.List;
+import java.util.UUID;
+
+@Component
+@RequiredArgsConstructor
+@Slf4j
+public class JwtAccessTokenGenerator {
+
+    private final JwtEncoder jwtEncoder;
+    private final JwtProperties jwtProperties;
+    private final UserRoleRepository userRoleRepository;
+
+    /**
+     * Issues an RS256 access token for the user. The token value is not logged.
+     */
+    @Transactional(readOnly = true)
+    public AccessToken generate(UUID userId) {
+        Instant issuedAt = Instant.now();
+        Instant expiresAt = issuedAt.plus(jwtProperties.getAccessTokenTtl());
+        List<String> roles = userRoleRepository.findRoleNamesByUserId(userId);
+
+        JwsHeader header = JwsHeader.with(SignatureAlgorithm.RS256)
+                .keyId(jwtProperties.getKeyId())
+                .type("JWT")
+                .build();
+        JwtClaimsSet claims = JwtClaimsSet.builder()
+                .subject(userId.toString())
+                .issuer(jwtProperties.getIssuer())
+                .audience(List.of(jwtProperties.getAudience()))
+                .issuedAt(issuedAt)
+                .expiresAt(expiresAt)
+                .id(UUID.randomUUID().toString())
+                .claim(JwtRoleAuthoritiesConverter.ROLES_CLAIM, roles)
+                .build();
+
+        String token = jwtEncoder.encode(
+                JwtEncoderParameters.from(
+                        header,
+                        claims
+                )
+        ).getTokenValue();
+        log.debug("Issued access token for user {}", userId);
+
+        return new AccessToken(
+                token,
+                expiresAt,
+                jwtProperties.getAccessTokenTtl().toSeconds()
+        );
+    }
+}

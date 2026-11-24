@@ -9,7 +9,7 @@ spring:
       - org.springframework.boot.hibernate.autoconfigure.HibernateJpaAutoConfiguration
       - org.springframework.boot.data.jpa.autoconfigure.DataJpaRepositoriesAutoConfiguration
 
-zango:
+nextminds:
   auth:
     jwt:
       private-key-path: ../gateway-service/keys/private.pem

@@ -10,12 +10,12 @@
         <relativePath/>
     </parent>
 
-    <groupId>ir.zango</groupId>
-    <artifactId>zango</artifactId>
+    <groupId>ir.nextminds</groupId>
+    <artifactId>nextminds</artifactId>
     <version>0.0.1-SNAPSHOT</version>
-    <name>zango</name>
+    <name>nextminds</name>
     <packaging>pom</packaging>
-    <description>Zango Application</description>
+    <description>NextMinds Application</description>
 
     <modules>
         <module>discovery-service</module>
@@ -114,7 +114,26 @@
             <id>Aida-hpk</id>
             <name>Aida Habib Pour</name>
             <roles>
-                <role>Backend Developer</role>
+                <role>FullStack Developer</role>
+            </roles>
+        </developer>
+
+        <developer>
+            <id>VahhabBM</id>
+            <name>Vahab Balandomanesh</name>
+            <roles>
+                <role>Technical Lead</role>
+                <role>Software Analyst</role>
+                <role>FullStack Developer</role>
+            </roles>
+        </developer>
+
+        <developer>
+            <id>ARASWithH</id>
+            <name>Arash Safdar Pour</name>
+            <roles>
+                <role>Software Analyst</role>
+                <role>FullStack Developer</role>
             </roles>
         </developer>
     </developers>

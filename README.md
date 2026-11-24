@@ -1,6 +1,6 @@
-# Zango
+# NextMinds
 
-Zango is a community platform that connects people through dedicated spaces, starting with schools.
+NextMinds is a community platform that connects people through dedicated spaces, starting with schools.
 
 This repository currently contains the platform shell: service discovery, an API gateway, and the authentication service.
 
