@@ -1,0 +1,4 @@
+logging:
+  level:
+    root: ${USER_LOG_LEVEL:INFO}
+    ir.nextminds.user: ${USER_LOG_LEVEL:INFO}
