@@ -1,4 +1,0 @@
-logging:
-  level:
-    root: INFO
-    ir.nextminds.user: ${USER_LOG_LEVEL:DEBUG}
