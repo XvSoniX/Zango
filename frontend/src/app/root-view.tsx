@@ -1,3 +1,4 @@
+import { Link } from 'react-router'
 import { Button } from '@/components/ui/button'
 import {
   Card,
@@ -51,8 +52,16 @@ export function RootView() {
             </Dialog>
           </div>
         </CardContent>
-        <CardFooter className="justify-between text-xs text-muted-foreground">
+        <CardFooter className="flex-wrap justify-between gap-2 text-xs text-muted-foreground">
           <span>Button, Input, Card, Dialog verified</span>
+          <div className="flex items-center gap-2">
+            <Button asChild variant="link" size="sm">
+              <Link to="/assessment">ورود به آزمون انطباقی</Link>
+            </Button>
+            <Button asChild variant="outline" size="sm">
+              <Link to="/assessment/selection-lab">تست انتخاب سؤال</Link>
+            </Button>
+          </div>
         </CardFooter>
       </Card>
     </main>

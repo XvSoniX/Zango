@@ -15,6 +15,14 @@ export default defineConfig({
     host: true,
     port: 3000,
     proxy: {
+      '/api/v1/assessments': {
+        target: process.env.VITE_ASSESSMENT_URL || process.env.VITE_GATEWAY_URL || 'http://localhost:8000',
+        changeOrigin: true,
+      },
+      '/api/v1/internal/simulations': {
+        target: process.env.VITE_ASSESSMENT_URL || process.env.VITE_GATEWAY_URL || 'http://localhost:8000',
+        changeOrigin: true,
+      },
       '/api': {
         target: process.env.VITE_GATEWAY_URL || 'http://localhost:8080',
         changeOrigin: true,

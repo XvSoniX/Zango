@@ -1,0 +1,62 @@
+services:
+  assessment-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: zango-assessment-service
+    container_name: assessment-service
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      APP_ENV: dev
+      APP_PORT: "8000"
+      DATABASE_URL: postgresql+asyncpg://zango:zango@assessment-db:5432/zango_assessment
+      JWT_PUBLIC_KEY_PATH: /run/secrets/public.pem
+      JWT_ISSUER: ${JWT_ISSUER:-http://localhost:8081}
+      JWT_AUDIENCE: ${JWT_AUDIENCE:-zango}
+      EUREKA_ENABLED: "true"
+      EUREKA_SERVER_URL: http://${EUREKA_USERNAME:-root}:${EUREKA_PASSWORD:-toor123}@discovery-service:8761/eureka/
+      EUREKA_APP_NAME: ASSESSMENT-SERVICE
+      EUREKA_INSTANCE_HOST: assessment-service
+      EUREKA_INSTANCE_PORT: "8000"
+    volumes:
+      - ../gateway-service/keys/public.pem:/run/secrets/public.pem:ro
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:8000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+    depends_on:
+      assessment-db:
+        condition: service_healthy
+    networks:
+      - zango
+
+  assessment-db:
+    image: postgres:16
+    container_name: assessment-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: zango_assessment
+      POSTGRES_USER: zango
+      POSTGRES_PASSWORD: zango
+    volumes:
+      - zango-assessment-db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U zango -d zango_assessment"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    networks:
+      - zango
+
+networks:
+  zango:
+    name: zango
+    external: true
+
+volumes:
+  zango-assessment-db:

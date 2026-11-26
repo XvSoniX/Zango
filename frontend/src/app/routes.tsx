@@ -1,4 +1,5 @@
 import { createBrowserRouter, createMemoryRouter, type RouteObject } from 'react-router'
+import { AssessmentPage, SelectionLabPage } from '@/features/assessment'
 import { RootView } from './root-view'
 import { NotFoundView } from './not-found-view'
 
@@ -6,6 +7,14 @@ export const appRoutes: RouteObject[] = [
   {
     path: '/',
     element: <RootView />,
+  },
+  {
+    path: '/assessment',
+    element: <AssessmentPage />,
+  },
+  {
+    path: '/assessment/selection-lab',
+    element: <SelectionLabPage />,
   },
   {
     path: '*',
