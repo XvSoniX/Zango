@@ -10,9 +10,9 @@ spring:
       server:
         webflux:
           httpclient:
-            connect-timeout: 3000
+            connect-timeout: ${GATEWAY_CONNECT_TIMEOUT_MS:3000}
 
-            response-timeout: 5s
+            response-timeout: ${GATEWAY_RESPONSE_TIMEOUT:5s}
           default-filters:
             - AddResponseHeader=X-Content-Type-Options, nosniff
             - AddResponseHeader=X-Frame-Options, DENY
