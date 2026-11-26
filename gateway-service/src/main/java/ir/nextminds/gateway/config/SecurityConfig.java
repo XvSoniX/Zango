@@ -3,6 +3,7 @@ package ir.nextminds.gateway.config;
 import ir.nextminds.gateway.exception.AccessDeniedErrorHandler;
 import ir.nextminds.gateway.exception.AuthenticationErrorHandler;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cloud.gateway.config.GlobalCorsProperties;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.reactive.EnableWebFluxSecurity;
@@ -18,6 +19,8 @@ import org.springframework.security.oauth2.jwt.JwtIssuerValidator;
 import org.springframework.security.oauth2.server.resource.authentication.ReactiveJwtAuthenticationConverter;
 import org.springframework.security.web.server.SecurityWebFilterChain;
 import org.springframework.security.web.server.context.NoOpServerSecurityContextRepository;
+import org.springframework.web.cors.reactive.CorsConfigurationSource;
+import org.springframework.web.cors.reactive.UrlBasedCorsConfigurationSource;
 import reactor.core.publisher.Flux;
 
 import java.util.List;
@@ -53,6 +56,17 @@ public class SecurityConfig {
                 .oauth2ResourceServer(oauth2 -> oauth2.jwt(jwt ->
                         jwt.jwtAuthenticationConverter(jwtAuthenticationConverter())))
                 .build();
+    }
+
+    /**
+     * Bridges Gateway's {@link GlobalCorsProperties} into Spring Security's CORS filter
+     * so preflight OPTIONS requests and 401/403 responses honor the configured policy.
+     */
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource(GlobalCorsProperties globalCorsProperties) {
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.setCorsConfigurations(globalCorsProperties.getCorsConfigurations());
+        return source;
     }
 
     @Bean
