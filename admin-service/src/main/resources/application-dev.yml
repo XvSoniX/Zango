@@ -1,0 +1,4 @@
+logging:
+  level:
+    root: INFO
+    ir.nextminds.admin: ${ADMIN_LOG_LEVEL:DEBUG}

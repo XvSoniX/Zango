@@ -1,0 +1,71 @@
+server:
+  port: ${ADMIN_SERVICE_PORT:8083}
+
+spring:
+  application:
+    name: admin-service
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:dev}
+  datasource:
+    url: jdbc:postgresql://${ADMIN_DB_HOST:localhost}:${ADMIN_DB_PORT:5432}/${ADMIN_DB_NAME:nextminds_admin}
+    username: ${ADMIN_DB_USERNAME}
+    password: ${ADMIN_DB_PASSWORD}
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        default_schema: ${ADMIN_DB_SCHEMA:public}
+        jdbc:
+          time_zone: UTC
+  liquibase:
+    change-log: classpath:db/changelog/db.changelog-master.yaml
+    default-schema: ${ADMIN_DB_SCHEMA:public}
+  messages:
+    basename: i18n/messages
+    encoding: UTF-8
+    fallback-to-system-locale: false
+  jackson:
+    deserialization:
+      fail-on-unknown-properties: true
+
+eureka:
+  instance:
+    prefer-ip-address: true
+    instance-id: ${spring.application.name}:${server.port}
+  client:
+    service-url:
+      defaultZone: ${EUREKA_SERVER_URL:http://root:toor123@localhost:8761/eureka/}
+    register-with-eureka: true
+    fetch-registry: true
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus
+  endpoint:
+    health:
+      show-details: never
+
+logging:
+  pattern:
+    level: "%5p [correlationId=%X{correlationId:-}]"
+  file:
+    name: logs/admin/admin-service.log
+  level:
+    root: ${ADMIN_LOG_LEVEL:INFO}
+    ir.nextminds.admin: ${ADMIN_LOG_LEVEL:INFO}
+    com.netflix.eureka: WARN
+    com.netflix.discovery: WARN
+
+nextminds:
+  admin:
+    jwt:
+      public-key-path: ${JWT_PUBLIC_KEY_PATH:./gateway-service/keys/public.pem}
+      issuer: ${JWT_ISSUER:http://localhost:8081}
+      audience: ${JWT_AUDIENCE:nextminds}
+    auth:
+      base-url: http://AUTH-SERVICE
+      connect-timeout: 1s
+      response-timeout: 3s

@@ -19,12 +19,14 @@ management:
   endpoints:
     web:
       exposure:
-        include: health,info
+        include: health,info,prometheus
   endpoint:
     health:
       show-details: never
 
 logging:
+  pattern:
+    level: "%5p [correlationId=%X{correlationId:-}]"
   file:
     name: logs/consulting/consulting-service.log
   level:

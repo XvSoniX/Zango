@@ -1,0 +1,8 @@
+spring:
+  security:
+    user:
+      name: ${EUREKA_USERNAME}
+      password: ${EUREKA_PASSWORD}
+
+server:
+  forward-headers-strategy: framework

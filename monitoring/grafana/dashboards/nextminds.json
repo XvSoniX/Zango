@@ -1,0 +1,30 @@
+{
+  "uid": "nextminds",
+  "title": "NextMinds",
+  "schemaVersion": 39,
+  "refresh": "30s",
+  "time": {"from": "now-1h", "to": "now"},
+  "panels": [
+    {
+      "type": "timeseries",
+      "title": "JVM memory used",
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 0},
+      "targets": [{"expr": "sum by (job, instance, area) (jvm_memory_used_bytes)", "refId": "A"}]
+    },
+    {
+      "type": "timeseries",
+      "title": "HTTP requests",
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 0},
+      "targets": [{"expr": "sum by (job, instance, status) (rate(http_server_requests_seconds_count[1m]))", "refId": "A"}]
+    },
+    {
+      "type": "timeseries",
+      "title": "HikariCP active connections",
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "gridPos": {"h": 8, "w": 24, "x": 0, "y": 8},
+      "targets": [{"expr": "hikaricp_connections_active", "refId": "A"}]
+    }
+  ]
+}
