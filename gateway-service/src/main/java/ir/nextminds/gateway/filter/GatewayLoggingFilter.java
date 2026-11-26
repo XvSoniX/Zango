@@ -7,6 +7,7 @@ import org.springframework.cloud.gateway.filter.GlobalFilter;
 import org.springframework.core.Ordered;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.stereotype.Component;
+import org.slf4j.MDC;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
@@ -31,12 +32,12 @@ public class GatewayLoggingFilter implements GlobalFilter, Ordered {
 
         long startTime = System.nanoTime();
 
-        log.info(
+        withCorrelation(correlationId, () -> log.info(
                 "Incoming request: correlationId={}, method={}, path={}",
                 correlationId,
                 method,
                 path
-        );
+        ));
 
         return chain.filter(exchange)
                 .doFinally(signalType -> {
@@ -47,7 +48,7 @@ public class GatewayLoggingFilter implements GlobalFilter, Ordered {
 
                     HttpStatusCode status = exchange.getResponse().getStatusCode();
 
-                    log.info(
+                    withCorrelation(correlationId, () -> log.info(
                             "Outgoing response: correlationId={}, method={}, path={}, status={}, duration={}ms, signal={}",
                             correlationId,
                             method,
@@ -55,8 +56,19 @@ public class GatewayLoggingFilter implements GlobalFilter, Ordered {
                             status != null ? status.value() : "UNKNOWN",
                             duration,
                             signalType
-                    );
+                    ));
                 });
+    }
+
+    private static void withCorrelation(String correlationId, Runnable action) {
+        if (correlationId != null) {
+            MDC.put("correlationId", correlationId);
+        }
+        try {
+            action.run();
+        } finally {
+            MDC.remove("correlationId");
+        }
     }
 
     @Override

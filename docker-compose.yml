@@ -9,7 +9,7 @@ services:
     environment:
       EUREKA_HOSTNAME: discovery-service
       EUREKA_USERNAME: ${EUREKA_USERNAME:-root}
-      EUREKA_PASSWORD: ${EUREKA_PASSWORD:-toor123}
+      EUREKA_PASSWORD: ${EUREKA_PASSWORD:?Set EUREKA_PASSWORD}
       LOGGING_FILE_NAME: ""
     ports:
       - "${DISCOVERY_PORT:-8761}:${DISCOVERY_PORT:-8761}"
@@ -37,8 +37,8 @@ services:
     environment:
       GATEWAY_PORT: "${GATEWAY_PORT:-8080}"
       EUREKA_USERNAME: ${EUREKA_USERNAME:-root}
-      EUREKA_PASSWORD: ${EUREKA_PASSWORD:-toor123}
-      EUREKA_SERVER_URL: http://${EUREKA_USERNAME:-root}:${EUREKA_PASSWORD:-toor123}@discovery-service:${DISCOVERY_PORT:-8761}/eureka/
+      EUREKA_PASSWORD: ${EUREKA_PASSWORD:?Set EUREKA_PASSWORD}
+      EUREKA_SERVER_URL: http://${EUREKA_USERNAME:-root}:${EUREKA_PASSWORD:?Set EUREKA_PASSWORD}@discovery-service:${DISCOVERY_PORT:-8761}/eureka/
       JWT_PUBLIC_KEY_PATH: /run/secrets/public.pem
       JWT_ISSUER: ${JWT_ISSUER:-http://localhost:8081}
       JWT_AUDIENCE: ${JWT_AUDIENCE:-nextminds}
@@ -63,7 +63,7 @@ services:
     environment:
       POSTGRES_DB: ${AUTH_DB_NAME:-nextminds_auth}
       POSTGRES_USER: ${AUTH_DB_USERNAME:-nextminds}
-      POSTGRES_PASSWORD: ${AUTH_DB_PASSWORD:-nextminds}
+      POSTGRES_PASSWORD: ${AUTH_DB_PASSWORD:?Set AUTH_DB_PASSWORD}
     volumes:
       - nextminds-auth-db:/var/lib/postgresql/data
     healthcheck:
@@ -93,12 +93,12 @@ services:
       AUTH_SERVICE_PORT: "${AUTH_SERVICE_PORT:-8081}"
       SERVER_SHUTDOWN: graceful
       SPRING_LIFECYCLE_TIMEOUT_PER_SHUTDOWN_PHASE: 20s
-      EUREKA_SERVER_URL: http://${EUREKA_USERNAME:-root}:${EUREKA_PASSWORD:-toor123}@discovery-service:${DISCOVERY_PORT:-8761}/eureka/
+      EUREKA_SERVER_URL: http://${EUREKA_USERNAME:-root}:${EUREKA_PASSWORD:?Set EUREKA_PASSWORD}@discovery-service:${DISCOVERY_PORT:-8761}/eureka/
       AUTH_DB_HOST: auth-db
       AUTH_DB_PORT: "5432"
       AUTH_DB_NAME: ${AUTH_DB_NAME:-nextminds_auth}
       AUTH_DB_USERNAME: ${AUTH_DB_USERNAME:-nextminds}
-      AUTH_DB_PASSWORD: ${AUTH_DB_PASSWORD:-nextminds}
+      AUTH_DB_PASSWORD: ${AUTH_DB_PASSWORD:?Set AUTH_DB_PASSWORD}
       AUTH_DB_SCHEMA: ${AUTH_DB_SCHEMA:-public}
       JWT_PRIVATE_KEY_PATH: /run/secrets/private.pem
       JWT_ISSUER: ${JWT_ISSUER:-http://localhost:8081}
@@ -113,7 +113,7 @@ services:
     ports:
       - "${AUTH_SERVICE_PORT:-8081}:${AUTH_SERVICE_PORT:-8081}"
     volumes:
-      - "${JWT_PRIVATE_KEY_FILE:-./auth-service/keys/private.pem}:/run/secrets/private.pem:ro"
+      - "${JWT_PRIVATE_KEY_FILE:-./gateway-service/keys/private.pem}:/run/secrets/private.pem:ro"
     healthcheck:
       test: ["CMD", "curl", "-fsS", "http://127.0.0.1:${AUTH_SERVICE_PORT:-8081}/actuator/health"]
       interval: 10s
@@ -123,15 +123,70 @@ services:
     networks:
       - nextminds
 
-  user-db:
+#  user-db:
+#    image: postgres:16
+#    restart: unless-stopped
+#    environment:
+#      POSTGRES_DB: ${USER_DB_NAME:-nextminds_user}
+#      POSTGRES_USER: ${USER_DB_USERNAME:-nextminds}
+#      POSTGRES_PASSWORD: ${USER_DB_PASSWORD:?Set USER_DB_PASSWORD}
+#    volumes:
+#      - nextminds-user-db:/var/lib/postgresql/data
+#    healthcheck:
+#      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+#      interval: 10s
+#      timeout: 5s
+#      retries: 5
+#      start_period: 20s
+#    networks:
+#      - nextminds
+#
+#  user-service:
+#    build:
+#      context: .
+#      args:
+#        SERVICE: user-service
+#        PORT: "${USER_SERVICE_PORT:-8082}"
+#    image: nextminds-user
+#    restart: unless-stopped
+#    stop_grace_period: 30s
+#    depends_on:
+#      discovery-service:
+#        condition: service_healthy
+#      user-db:
+#        condition: service_healthy
+#    environment:
+#      USER_SERVICE_PORT: "${USER_SERVICE_PORT:-8082}"
+#      SERVER_SHUTDOWN: graceful
+#      SPRING_LIFECYCLE_TIMEOUT_PER_SHUTDOWN_PHASE: 20s
+#      EUREKA_SERVER_URL: http://${EUREKA_USERNAME:-root}:${EUREKA_PASSWORD:?Set EUREKA_PASSWORD}@discovery-service:${DISCOVERY_PORT:-8761}/eureka/
+#      USER_DB_HOST: user-db
+#      USER_DB_PORT: "5432"
+#      USER_DB_NAME: ${USER_DB_NAME:-nextminds_user}
+#      USER_DB_USERNAME: ${USER_DB_USERNAME:-nextminds}
+#      USER_DB_PASSWORD: ${USER_DB_PASSWORD:?Set USER_DB_PASSWORD}
+#      USER_DB_SCHEMA: ${USER_DB_SCHEMA:-public}
+#      LOGGING_FILE_NAME: ""
+#    ports:
+#      - "${USER_SERVICE_PORT:-8082}:${USER_SERVICE_PORT:-8082}"
+#    healthcheck:
+#      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:${USER_SERVICE_PORT:-8082}/actuator/health"]
+#      interval: 10s
+#      timeout: 5s
+#      retries: 5
+#      start_period: 90s
+#    networks:
+#      - nextminds
+
+  admin-db:
     image: postgres:16
     restart: unless-stopped
     environment:
-      POSTGRES_DB: ${USER_DB_NAME:-nextminds_user}
-      POSTGRES_USER: ${USER_DB_USERNAME:-nextminds}
-      POSTGRES_PASSWORD: ${USER_DB_PASSWORD:-nextminds}
+      POSTGRES_DB: ${ADMIN_DB_NAME:-nextminds_admin}
+      POSTGRES_USER: ${ADMIN_DB_USERNAME:-nextminds}
+      POSTGRES_PASSWORD: ${ADMIN_DB_PASSWORD:?Set ADMIN_DB_PASSWORD}
     volumes:
-      - nextminds-user-db:/var/lib/postgresql/data
+      - nextminds-admin-db:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
       interval: 10s
@@ -141,40 +196,73 @@ services:
     networks:
       - nextminds
 
-  user-service:
+  admin-service:
     build:
       context: .
       args:
-        SERVICE: user-service
-        PORT: "${USER_SERVICE_PORT:-8082}"
-    image: nextminds-user
+        SERVICE: admin-service
+        PORT: "${ADMIN_SERVICE_PORT:-8083}"
+    image: nextminds-admin
     restart: unless-stopped
     stop_grace_period: 30s
     depends_on:
       discovery-service:
         condition: service_healthy
-      user-db:
+      admin-db:
         condition: service_healthy
     environment:
-      USER_SERVICE_PORT: "${USER_SERVICE_PORT:-8082}"
+      ADMIN_SERVICE_PORT: "${ADMIN_SERVICE_PORT:-8083}"
       SERVER_SHUTDOWN: graceful
       SPRING_LIFECYCLE_TIMEOUT_PER_SHUTDOWN_PHASE: 20s
-      EUREKA_SERVER_URL: http://${EUREKA_USERNAME:-root}:${EUREKA_PASSWORD:-toor123}@discovery-service:${DISCOVERY_PORT:-8761}/eureka/
-      USER_DB_HOST: user-db
-      USER_DB_PORT: "5432"
-      USER_DB_NAME: ${USER_DB_NAME:-nextminds_user}
-      USER_DB_USERNAME: ${USER_DB_USERNAME:-nextminds}
-      USER_DB_PASSWORD: ${USER_DB_PASSWORD:-nextminds}
-      USER_DB_SCHEMA: ${USER_DB_SCHEMA:-public}
+      EUREKA_SERVER_URL: http://${EUREKA_USERNAME:-root}:${EUREKA_PASSWORD:?Set EUREKA_PASSWORD}@discovery-service:${DISCOVERY_PORT:-8761}/eureka/
+      ADMIN_DB_HOST: admin-db
+      ADMIN_DB_PORT: "5432"
+      ADMIN_DB_NAME: ${ADMIN_DB_NAME:-nextminds_admin}
+      ADMIN_DB_USERNAME: ${ADMIN_DB_USERNAME:-nextminds}
+      ADMIN_DB_PASSWORD: ${ADMIN_DB_PASSWORD:?Set ADMIN_DB_PASSWORD}
+      ADMIN_DB_SCHEMA: ${ADMIN_DB_SCHEMA:-public}
+      JWT_PUBLIC_KEY_PATH: /run/secrets/public.pem
+      JWT_ISSUER: ${JWT_ISSUER:-http://localhost:8081}
+      JWT_AUDIENCE: ${JWT_AUDIENCE:-nextminds}
       LOGGING_FILE_NAME: ""
     ports:
-      - "${USER_SERVICE_PORT:-8082}:${USER_SERVICE_PORT:-8082}"
+      - "${ADMIN_SERVICE_PORT:-8083}:${ADMIN_SERVICE_PORT:-8083}"
+    volumes:
+      - "${JWT_PUBLIC_KEY_FILE:-./gateway-service/keys/public.pem}:/run/secrets/public.pem:ro"
     healthcheck:
-      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:${USER_SERVICE_PORT:-8082}/actuator/health"]
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:${ADMIN_SERVICE_PORT:-8083}/actuator/health"]
       interval: 10s
       timeout: 5s
       retries: 5
       start_period: 90s
+    networks:
+      - nextminds
+
+  prometheus:
+    image: prom/prometheus:latest
+    restart: unless-stopped
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    ports:
+      - "127.0.0.1:${PROMETHEUS_PORT:-9090}:9090"
+    networks:
+      - nextminds
+
+  grafana:
+    image: grafana/grafana:latest
+    restart: unless-stopped
+    environment:
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER:?Set GRAFANA_ADMIN_USER}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:?Set GRAFANA_ADMIN_PASSWORD}
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_AUTH_ANONYMOUS_ENABLED: "false"
+    volumes:
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./monitoring/grafana/dashboards:/var/lib/grafana/dashboards:ro
+    ports:
+      - "127.0.0.1:${GRAFANA_PORT:-3000}:3000"
+    depends_on:
+      - prometheus
     networks:
       - nextminds
 
@@ -185,3 +273,4 @@ networks:
 volumes:
   nextminds-auth-db:
   nextminds-user-db:
+  nextminds-admin-db:

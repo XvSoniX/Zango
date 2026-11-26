@@ -16,6 +16,7 @@ COPY pom.xml ./
 COPY discovery-service/pom.xml discovery-service/pom.xml
 COPY gateway-service/pom.xml gateway-service/pom.xml
 COPY auth-service/pom.xml auth-service/pom.xml
+COPY admin-service/pom.xml admin-service/pom.xml
 COPY consulting-service/pom.xml consulting-service/pom.xml
 
 RUN chmod +x mvnw \

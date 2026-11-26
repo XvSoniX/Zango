@@ -1,0 +1,12 @@
+server:
+  forward-headers-strategy: framework
+
+eureka:
+  client:
+    service-url:
+      defaultZone: ${EUREKA_SERVER_URL}
+
+logging:
+  level:
+    root: ${ADMIN_LOG_LEVEL:INFO}
+    ir.nextminds.admin: ${ADMIN_LOG_LEVEL:INFO}

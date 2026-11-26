@@ -1,0 +1,146 @@
+databaseChangeLog:
+  - changeSet:
+      id: 001-create-admin-audit-logs
+      author: nextminds
+      changes:
+        - createTable:
+            tableName: admin_audit_logs
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  constraints:
+                    primaryKey: true
+                    primaryKeyName: pk_admin_audit_logs
+                    nullable: false
+              - column:
+                  name: administrator_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+              - column:
+                  name: action
+                  type: varchar(64)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: target_type
+                  type: varchar(32)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: target_id
+                  type: uuid
+              - column:
+                  name: reason
+                  type: varchar(500)
+              - column:
+                  name: result
+                  type: varchar(16)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: source_ip
+                  type: varchar(45)
+              - column:
+                  name: correlation_id
+                  type: uuid
+              - column:
+                  name: metadata
+                  type: jsonb
+              - column:
+                  name: created_at
+                  type: timestamp(6) with time zone
+                  constraints:
+                    nullable: false
+              - column:
+                  name: completed_at
+                  type: timestamp(6) with time zone
+        - sql:
+            sql: >
+              ALTER TABLE admin_audit_logs ADD CONSTRAINT ck_admin_audit_logs_action
+              CHECK (action IN ('ROLE_CREATED', 'ROLE_UPDATED', 'ROLE_DELETED', 'ROLE_ASSIGNED', 'ROLE_REVOKED'))
+        - sql:
+            sql: >
+              ALTER TABLE admin_audit_logs ADD CONSTRAINT ck_admin_audit_logs_target_type
+              CHECK (target_type IN ('ROLE', 'USER'))
+        - sql:
+            sql: >
+              ALTER TABLE admin_audit_logs ADD CONSTRAINT ck_admin_audit_logs_action_target_type
+              CHECK (
+                (action IN ('ROLE_CREATED', 'ROLE_UPDATED', 'ROLE_DELETED') AND target_type = 'ROLE')
+                OR (action IN ('ROLE_ASSIGNED', 'ROLE_REVOKED') AND target_type = 'USER')
+              )
+        - sql:
+            sql: >
+              ALTER TABLE admin_audit_logs ADD CONSTRAINT ck_admin_audit_logs_target_id
+              CHECK (
+                target_id IS NOT NULL
+                OR (action = 'ROLE_CREATED' AND result IN ('PENDING', 'FAILURE'))
+              )
+        - sql:
+            sql: >
+              ALTER TABLE admin_audit_logs ADD CONSTRAINT ck_admin_audit_logs_result
+              CHECK (result IN ('PENDING', 'SUCCESS', 'FAILURE'))
+        - sql:
+            sql: >
+              ALTER TABLE admin_audit_logs ADD CONSTRAINT ck_admin_audit_logs_completion
+              CHECK (
+                (result = 'PENDING' AND completed_at IS NULL)
+                OR (result <> 'PENDING' AND completed_at IS NOT NULL)
+              )
+        - sql:
+            sql: >
+              ALTER TABLE admin_audit_logs ADD CONSTRAINT ck_admin_audit_logs_reason
+              CHECK (
+                action NOT IN ('ROLE_ASSIGNED', 'ROLE_REVOKED', 'ROLE_DELETED')
+                OR (
+                  reason IS NOT NULL
+                  AND length(regexp_replace(reason, '[[:space:]]', '', 'g')) > 0
+                )
+              )
+        - createIndex:
+            tableName: admin_audit_logs
+            indexName: idx_admin_audit_logs_created_at
+            columns:
+              - column:
+                  name: created_at
+                  descending: true
+        - createIndex:
+            tableName: admin_audit_logs
+            indexName: idx_admin_audit_logs_administrator_created
+            columns:
+              - column:
+                  name: administrator_id
+              - column:
+                  name: created_at
+                  descending: true
+        - createIndex:
+            tableName: admin_audit_logs
+            indexName: idx_admin_audit_logs_target_created
+            columns:
+              - column:
+                  name: target_type
+              - column:
+                  name: target_id
+              - column:
+                  name: created_at
+                  descending: true
+        - createIndex:
+            tableName: admin_audit_logs
+            indexName: idx_admin_audit_logs_action_created
+            columns:
+              - column:
+                  name: action
+              - column:
+                  name: created_at
+                  descending: true
+        - createIndex:
+            tableName: admin_audit_logs
+            indexName: idx_admin_audit_logs_result_created
+            columns:
+              - column:
+                  name: result
+              - column:
+                  name: created_at
+                  descending: true
