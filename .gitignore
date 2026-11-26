@@ -117,3 +117,6 @@ HELP.md
 # custom rules
 # ==============================
 .agents/
+analysis/
+reports/
+skills-lock.json
