@@ -2,6 +2,8 @@ package ir.nextminds.gateway.exception;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import ir.nextminds.gateway.exception.enums.GatewayErrorCode;
+import ir.nextminds.gateway.constant.GatewayHeaders;
+import ir.nextminds.gateway.filter.CorrelationIdFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.MessageSource;
 import org.springframework.core.io.buffer.DataBuffer;
@@ -59,7 +61,13 @@ public class GatewayErrorWriter {
 
         problemDetail.setProperty("isSuccess", false);
         problemDetail.setProperty("errorCode", code);
-        problemDetail.setProperty("correlationId", UUID.randomUUID().toString());
+        String correlationId = exchange.getAttribute(CorrelationIdFilter.ATTRIBUTE);
+        if (correlationId == null) {
+            correlationId = UUID.randomUUID().toString();
+            exchange.getAttributes().put(CorrelationIdFilter.ATTRIBUTE, correlationId);
+        }
+        exchange.getResponse().getHeaders().set(GatewayHeaders.CORRELATION_ID, correlationId);
+        problemDetail.setProperty("correlationId", correlationId);
 
         if (exchange.getResponse().isCommitted()) {
             return Mono.error(

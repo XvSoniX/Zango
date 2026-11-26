@@ -21,4 +21,12 @@ public interface UserRoleRepository extends JpaRepository<UserRoleEntity, UserRo
     List<String> findRoleNamesByUserId(@Param("userId") UUID userId);
 
     boolean existsByRole_Id(UUID roleId);
+
+    @Query("""
+            select count(userRole) from UserRoleEntity userRole
+            where userRole.role.id = :roleId
+              and userRole.user.status = ir.nextminds.auth.domain.enums.AccountStatusEnum.ACTIVE
+              and userRole.user.deletedAt is null
+            """)
+    long countActiveUsersByRoleId(@Param("roleId") UUID roleId);
 }

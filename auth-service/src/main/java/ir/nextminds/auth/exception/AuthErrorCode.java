@@ -53,6 +53,11 @@ public enum AuthErrorCode {
             "http://localhost/problems/role-in-use"
     ),
 
+    LAST_ADMIN(
+            HttpStatus.CONFLICT,
+            "http://localhost/problems/last-admin"
+    ),
+
     PASSWORD_RESET_FAILED(
             HttpStatus.BAD_REQUEST,
             "http://localhost/problems/password-reset-failed"
