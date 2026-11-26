@@ -45,6 +45,25 @@ class RoleControllerSecurityTest {
     }
 
     @Test
+    void openApiExposesBearerSchemeAndAdminRequirement() throws Exception {
+        mockMvc.perform(get("/v3/api-docs"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.components.securitySchemes.bearerAuth.type").value("http"))
+                .andExpect(jsonPath("$.components.securitySchemes.bearerAuth.scheme").value("bearer"))
+                .andExpect(jsonPath("$.components.securitySchemes.bearerAuth.bearerFormat").value("JWT"))
+                .andExpect(jsonPath("$.paths['/api/v1/admin/roles'].get.security[0].bearerAuth").isArray())
+                .andExpect(jsonPath("$.paths['/api/v1/admin/roles'].get.summary").value("List roles / فهرست نقش‌ها"))
+                .andExpect(jsonPath("$.paths['/api/v1/admin/roles'].post.summary").value("Create a role / ایجاد نقش"))
+                .andExpect(jsonPath("$.paths['/api/v1/admin/roles/{roleId}'].put.summary").value("Update a role / ویرایش نقش"))
+                .andExpect(jsonPath("$.paths['/api/v1/admin/roles/{roleId}'].delete.summary").value("Delete a role / حذف نقش"))
+                .andExpect(jsonPath("$.paths['/api/v1/admin/users/{userId}/roles'].get.summary").value("Get user roles / مشاهده نقش‌های کاربر"))
+                .andExpect(jsonPath("$.paths['/api/v1/admin/users/{userId}/roles'].post.summary").value("Assign a role / انتساب نقش"))
+                .andExpect(jsonPath("$.paths['/api/v1/admin/users/{userId}/roles/{roleId}'].delete.summary").value("Revoke a role / لغو انتساب نقش"))
+                .andExpect(jsonPath("$.paths['/api/v1/admin/audit-logs'].get.summary").value("Search audit logs / جست‌وجوی گزارش حسابرسی"))
+                .andExpect(jsonPath("$.paths['/api/v1/admin/audit-logs/{auditId}'].get.summary").value("Get an audit log / دریافت گزارش حسابرسی"));
+    }
+
+    @Test
     void userRoleIsForbidden() throws Exception {
         when(jwtDecoder.decode("user-token")).thenReturn(token(List.of("ROLE_USER")));
 

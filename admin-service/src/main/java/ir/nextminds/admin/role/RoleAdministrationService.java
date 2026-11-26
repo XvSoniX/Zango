@@ -13,6 +13,7 @@ import ir.nextminds.admin.role.dto.CreateRoleRequest;
 import ir.nextminds.admin.role.dto.RoleResponse;
 import ir.nextminds.admin.role.dto.UpdateRoleRequest;
 import ir.nextminds.admin.role.dto.UserRolesResponse;
+import io.micrometer.core.instrument.MeterRegistry;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -33,6 +34,7 @@ public class RoleAdministrationService {
     private final AuditLogService auditLogService;
     private final AuthRoleClient authRoleClient;
     private final CallerContext callerContext;
+    private final MeterRegistry meterRegistry;
 
     public List<RoleResponse> listRoles() {
         return authRoleClient.listRoles(callerContext.current());
@@ -146,6 +148,7 @@ public class RoleAdministrationService {
         try {
             auditLogService.finalizeSuccess(auditLog.getId(), finalization.targetId(), finalization.metadata());
         } catch (RuntimeException exception) {
+            meterRegistry.counter("admin.audit.finalization.failures", "outcome", "success").increment();
             log.error(
                     "Audit finalization failed after Auth success. auditId={}, correlationId={}, action={}",
                     auditLog.getId(),
@@ -166,6 +169,7 @@ public class RoleAdministrationService {
         try {
             auditLogService.finalizeFailure(auditLog.getId(), null, failureMetadata(exception));
         } catch (RuntimeException failure) {
+            meterRegistry.counter("admin.audit.finalization.failures", "outcome", "failure").increment();
             log.error(
                     "Audit finalization failed after Auth outcome. auditId={}, correlationId={}, action={}",
                     auditLog.getId(),

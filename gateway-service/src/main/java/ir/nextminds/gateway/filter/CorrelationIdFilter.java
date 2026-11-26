@@ -1,26 +1,29 @@
 package ir.nextminds.gateway.filter;
 
 import ir.nextminds.gateway.constant.GatewayHeaders;
-import org.springframework.cloud.gateway.filter.GatewayFilterChain;
-import org.springframework.cloud.gateway.filter.GlobalFilter;
 import org.springframework.core.Ordered;
 import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.stereotype.Component;
 import org.springframework.web.server.ServerWebExchange;
+import org.springframework.web.server.WebFilter;
+import org.springframework.web.server.WebFilterChain;
 import reactor.core.publisher.Mono;
 
 import java.util.UUID;
 
 @Component
-public class CorrelationIdFilter implements GlobalFilter, Ordered {
+public class CorrelationIdFilter implements WebFilter, Ordered {
+
+    public static final String ATTRIBUTE = CorrelationIdFilter.class.getName() + ".id";
 
     @Override
     public Mono<Void> filter(
             ServerWebExchange exchange,
-            GatewayFilterChain chain
+            WebFilterChain chain
     ) {
 
         String correlationId = resolveCorrelationId(exchange);
+        exchange.getAttributes().put(ATTRIBUTE, correlationId);
 
         ServerHttpRequest request = exchange.getRequest()
                 .mutate()
@@ -65,6 +68,6 @@ public class CorrelationIdFilter implements GlobalFilter, Ordered {
 
     @Override
     public int getOrder() {
-        return Ordered.HIGHEST_PRECEDENCE + 10;
+        return Ordered.HIGHEST_PRECEDENCE;
     }
 }

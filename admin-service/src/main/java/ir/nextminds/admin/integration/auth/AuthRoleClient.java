@@ -110,6 +110,12 @@ public class AuthRoleClient {
             });
         } catch (RestClientException exception) {
             throw DownstreamFailureClassifier.classify(exception);
+        } catch (IllegalStateException exception) {
+            DownstreamCallException failure = DownstreamFailureClassifier.classify(exception);
+            if (failure.kind() == DownstreamCallException.Kind.UNAVAILABLE) {
+                throw failure;
+            }
+            throw exception;
         }
     }
 
