@@ -1,4 +1,25 @@
 services:
+  nginx:
+    build:
+      context: ./infrastructure/nginx
+    image: nextminds-nginx
+    restart: unless-stopped
+    depends_on:
+      gateway-service:
+        condition: service_healthy
+    environment:
+      GATEWAY_PORT: "${GATEWAY_PORT:-8080}"
+      FRONTEND_HOST: ${FRONTEND_HOST:-frontend}
+      FRONTEND_PORT: "${FRONTEND_PORT:-3000}"
+      NGINX_PROXY_CONNECT_TIMEOUT: ${NGINX_PROXY_CONNECT_TIMEOUT:-3s}
+      NGINX_PROXY_READ_TIMEOUT: ${NGINX_PROXY_READ_TIMEOUT:-60s}
+      NGINX_PROXY_SEND_TIMEOUT: ${NGINX_PROXY_SEND_TIMEOUT:-60s}
+      NGINX_CLIENT_MAX_BODY_SIZE: ${NGINX_CLIENT_MAX_BODY_SIZE:-0}
+    ports:
+      - "${NGINX_HTTP_PORT:-80}:80"
+    networks:
+      - nextminds
+
   discovery-service:
     build:
       context: .
@@ -12,7 +33,7 @@ services:
       EUREKA_PASSWORD: ${EUREKA_PASSWORD:?Set EUREKA_PASSWORD}
       LOGGING_FILE_NAME: ""
     ports:
-      - "${DISCOVERY_PORT:-8761}:${DISCOVERY_PORT:-8761}"
+      - "127.0.0.1:${DISCOVERY_PORT:-8761}:${DISCOVERY_PORT:-8761}"
     healthcheck:
       test: ["CMD", "curl", "-fsS", "http://127.0.0.1:${DISCOVERY_PORT:-8761}/actuator/health"]
       interval: 10s
@@ -45,7 +66,7 @@ services:
       FRONTEND_URL: ${FRONTEND_URL:-http://localhost:3000}
       LOGGING_FILE_NAME: ""
     ports:
-      - "${GATEWAY_PORT:-8080}:${GATEWAY_PORT:-8080}"
+      - "127.0.0.1:${GATEWAY_PORT:-8080}:${GATEWAY_PORT:-8080}"
     volumes:
       - "${JWT_PUBLIC_KEY_FILE:-./gateway-service/keys/public.pem}:/run/secrets/public.pem:ro"
     healthcheck:
@@ -111,7 +132,7 @@ services:
       PASSWORD_RESET_RATE_LIMIT_WINDOW: ${PASSWORD_RESET_RATE_LIMIT_WINDOW:-15m}
       LOGGING_FILE_NAME: ""
     ports:
-      - "${AUTH_SERVICE_PORT:-8081}:${AUTH_SERVICE_PORT:-8081}"
+      - "127.0.0.1:${AUTH_SERVICE_PORT:-8081}:${AUTH_SERVICE_PORT:-8081}"
     volumes:
       - "${JWT_PRIVATE_KEY_FILE:-./gateway-service/keys/private.pem}:/run/secrets/private.pem:ro"
     healthcheck:
@@ -226,7 +247,7 @@ services:
       JWT_AUDIENCE: ${JWT_AUDIENCE:-nextminds}
       LOGGING_FILE_NAME: ""
     ports:
-      - "${ADMIN_SERVICE_PORT:-8083}:${ADMIN_SERVICE_PORT:-8083}"
+      - "127.0.0.1:${ADMIN_SERVICE_PORT:-8083}:${ADMIN_SERVICE_PORT:-8083}"
     volumes:
       - "${JWT_PUBLIC_KEY_FILE:-./gateway-service/keys/public.pem}:/run/secrets/public.pem:ro"
     healthcheck:
@@ -260,7 +281,7 @@ services:
       - ./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
       - ./monitoring/grafana/dashboards:/var/lib/grafana/dashboards:ro
     ports:
-      - "127.0.0.1:${GRAFANA_PORT:-3000}:3000"
+      - "127.0.0.1:${GRAFANA_PORT:-3001}:3000"
     depends_on:
       - prometheus
     networks:
