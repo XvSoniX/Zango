@@ -102,7 +102,7 @@ Admin uses its own PostgreSQL database. Connection settings are `ADMIN_DB_HOST`,
 
 ## Auth integration and audit lifecycle
 
-The default Auth destination is `http://AUTH-SERVICE`, resolved through service discovery and load balancing. The configured connection timeout is one second and response timeout is three seconds. Admin forwards the caller's Authorization header, `Accept-Language` when present, and `X-Correlation-ID`.
+The default Auth destination is `http://AUTH-SERVICE`, resolved through service discovery and load balancing. The default connection timeout is one second and response timeout is three seconds. `ADMIN_AUTH_BASE_URL`, `ADMIN_AUTH_CONNECT_TIMEOUT`, and `ADMIN_AUTH_RESPONSE_TIMEOUT` override these values. The URL host is a service ID resolved by the load balancer, not an arbitrary direct host URL. Admin forwards the caller's Authorization header, `Accept-Language` when present, and `X-Correlation-ID`.
 
 For a mutation, Admin persists a `PENDING` attempt before contacting Auth. If the initial write fails, it does not call Auth. Once the downstream outcome is known, Admin attempts to finalize the record as `SUCCESS` or `FAILURE`:
 
@@ -119,7 +119,7 @@ Read requests and requests rejected by security or validation before reaching th
 
 ## Audit monitoring and recovery
 
-The pending monitor checks every five minutes for records older than one hour and exposes their count as `admin.audit.pending.stale`. It logs a warning when it finds records. On a query failure, it logs an error and the gauge retains its previous value, so the gauge alone does not prove monitoring is healthy. Finalization failures increment `admin.audit.finalization.failures`, tagged by downstream outcome.
+By default the pending monitor starts after one minute, checks every five minutes for records older than one hour, and exposes their count as `admin.audit.pending.stale`. Set `ADMIN_AUDIT_MONITOR_INITIAL_DELAY`, `ADMIN_AUDIT_MONITOR_INTERVAL`, and `ADMIN_AUDIT_STALE_AFTER` to change those durations; the stale threshold must be positive. It logs a warning when it finds records. On a query failure, it logs an error and the gauge retains its previous value, so the gauge alone does not prove monitoring is healthy. Finalization failures increment `admin.audit.finalization.failures`, tagged by downstream outcome.
 
 Operators can search for `result=PENDING`, use the correlation ID and Auth-side evidence to investigate, and handle the business consequences manually. There is currently no API for manually finalizing an audit record or automated reconciliation. The monitor does not change audit outcomes or retry Auth operations. Configure alerts and define an operational investigation process before production use.
 
@@ -135,13 +135,15 @@ Actuator exposes health, info, and Prometheus according to the application confi
 
 ## Build and run
 
-From the repository root, provide an isolated Admin PostgreSQL database, the `ADMIN_DB_*` variables, `JWT_PUBLIC_KEY_PATH`, `JWT_ISSUER`, `JWT_AUDIENCE`, and `EUREKA_SERVER_URL`. Start the dependencies and run:
+Use the repository's `.env.example` as a template for deployment values; its credentials and URLs are local-development examples and must be replaced for production. The file does not automatically configure a local Java process: export the variables or load them using your deployment tooling. For a local run from the repository root, provide an isolated Admin PostgreSQL database, the `ADMIN_DB_*` variables, `JWT_PUBLIC_KEY_PATH`, `JWT_ISSUER`, `JWT_AUDIENCE`, and `EUREKA_SERVER_URL`. Start the dependencies and run:
 
 ```bash
 mvn -pl admin-service spring-boot:run
 ```
 
 Run the standard Admin tests with `mvn -pl admin-service test`. The root project specifies Java 24; the last review used Java 25 and Maven 3.8.7. Never point test code at production or development data. Do not remove existing databases, containers, or volumes to run tests.
+
+Compose reads `.env` for interpolation and explicitly passes the documented Admin settings to its containers. Compose uses the internal `admin-db:5432` address and constructs its own Eureka URL; the local-process `ADMIN_DB_HOST`, `ADMIN_DB_PORT`, and `EUREKA_SERVER_URL` examples do not override those internal values. Compose uses `JWT_PUBLIC_KEY_FILE` and `JWT_PRIVATE_KEY_FILE` as host-side mount paths, while `JWT_PUBLIC_KEY_PATH` and `JWT_PRIVATE_KEY_PATH` configure local processes. Set `SPRING_PROFILES_ACTIVE` explicitly for deployment. `GATEWAY_CONNECT_TIMEOUT_MS` and `GATEWAY_RESPONSE_TIMEOUT` control the Gateway budgets; coordinate them with Admin's Auth timeouts so the Gateway does not routinely give up first. If service ports change, update the static targets in `monitoring/prometheus.yml` as well.
 
 ## Testing and limitations
 

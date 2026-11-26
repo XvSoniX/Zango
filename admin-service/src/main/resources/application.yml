@@ -66,6 +66,10 @@ nextminds:
       issuer: ${JWT_ISSUER:http://localhost:8081}
       audience: ${JWT_AUDIENCE:nextminds}
     auth:
-      base-url: http://AUTH-SERVICE
-      connect-timeout: 1s
-      response-timeout: 3s
+      base-url: ${ADMIN_AUTH_BASE_URL:http://AUTH-SERVICE}
+      connect-timeout: ${ADMIN_AUTH_CONNECT_TIMEOUT:1s}
+      response-timeout: ${ADMIN_AUTH_RESPONSE_TIMEOUT:3s}
+    audit:
+      stale-after: ${ADMIN_AUDIT_STALE_AFTER:1h}
+      monitor-initial-delay: ${ADMIN_AUDIT_MONITOR_INITIAL_DELAY:1m}
+      monitor-interval: ${ADMIN_AUDIT_MONITOR_INTERVAL:5m}
