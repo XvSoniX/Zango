@@ -15,6 +15,8 @@ import ir.nextminds.auth.exception.DuplicateRoleException;
 import ir.nextminds.auth.exception.RoleInUseException;
 import ir.nextminds.auth.exception.RoleNotFoundException;
 import ir.nextminds.auth.exception.UserNotFoundException;
+import ir.nextminds.auth.exception.LastAdminException;
+import ir.nextminds.auth.domain.enums.AccountStatusEnum;
 import ir.nextminds.auth.repository.RoleRepository;
 import ir.nextminds.auth.repository.UserRepository;
 import ir.nextminds.auth.repository.UserRoleRepository;
@@ -38,6 +40,7 @@ public class RoleServiceImpl implements RoleService {
 
     private static final String ROLE_NAME_CONSTRAINT = "uk_roles_name";
     private static final String USER_ROLE_PRIMARY_KEY = "pk_user_roles";
+    private static final String ADMIN_ROLE = "ROLE_ADMIN";
 
     private final RoleRepository roleRepository;
     private final UserRepository userRepository;
@@ -79,8 +82,12 @@ public class RoleServiceImpl implements RoleService {
     @Override
     @Transactional
     public RoleResponseDTO update(UUID roleId, UpdateRoleRequestDTO request) {
-        RoleEntity role = roleRepository.findById(roleId).orElseThrow(RoleNotFoundException::new);
+        RoleEntity role = roleRepository.findByIdForUpdate(roleId).orElseThrow(RoleNotFoundException::new);
         String name = request.name().trim();
+        if (ADMIN_ROLE.equals(role.getName()) && !ADMIN_ROLE.equals(name)
+                && userRoleRepository.countActiveUsersByRoleId(roleId) > 0) {
+            throw new LastAdminException();
+        }
         roleRepository.findByName(name)
                 .filter(existing -> !existing.getId().equals(roleId))
                 .ifPresent(existing -> {
@@ -96,9 +103,7 @@ public class RoleServiceImpl implements RoleService {
     @Override
     @Transactional
     public void delete(UUID roleId) {
-        if (!roleRepository.existsById(roleId)) {
-            throw new RoleNotFoundException();
-        }
+        roleRepository.findByIdForUpdate(roleId).orElseThrow(RoleNotFoundException::new);
         if (userRoleRepository.existsByRole_Id(roleId)) {
             log.warn("Role deletion rejected because role {} is still assigned", roleId);
             throw new RoleInUseException();
@@ -149,15 +154,15 @@ public class RoleServiceImpl implements RoleService {
     @Override
     @Transactional
     public void revoke(UUID userId, UUID roleId) {
-        if (!userRepository.existsById(userId)) {
-            throw new UserNotFoundException();
-        }
-        if (!roleRepository.existsById(roleId)) {
-            throw new RoleNotFoundException();
-        }
+        UserEntity user = userRepository.findById(userId).orElseThrow(UserNotFoundException::new);
+        RoleEntity role = roleRepository.findByIdForUpdate(roleId).orElseThrow(RoleNotFoundException::new);
         UserRoleId id = new UserRoleId(userId, roleId);
         if (!userRoleRepository.existsById(id)) {
             throw new RoleNotFoundException();
+        }
+        if (ADMIN_ROLE.equals(role.getName()) && user.getStatus() == AccountStatusEnum.ACTIVE
+                && user.getDeletedAt() == null && userRoleRepository.countActiveUsersByRoleId(roleId) <= 1) {
+            throw new LastAdminException();
         }
         userRoleRepository.deleteById(id);
         log.info("Revoked role {} from user {}", roleId, userId);

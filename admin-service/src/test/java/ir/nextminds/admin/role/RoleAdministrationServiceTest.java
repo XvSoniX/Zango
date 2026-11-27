@@ -17,6 +17,8 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InOrder;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Spy;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 
@@ -55,6 +57,9 @@ class RoleAdministrationServiceTest {
 
     @Mock
     private CallerContext callerContext;
+
+    @Spy
+    private SimpleMeterRegistry meterRegistry = new SimpleMeterRegistry();
 
     @InjectMocks
     private RoleAdministrationService service;
@@ -172,6 +177,7 @@ class RoleAdministrationServiceTest {
 
         assertSame(created, response);
         verify(authRoleClient).createRole(any(), any(), any());
+        assertEquals(1.0, meterRegistry.counter("admin.audit.finalization.failures", "outcome", "success").count());
     }
 
     @Test

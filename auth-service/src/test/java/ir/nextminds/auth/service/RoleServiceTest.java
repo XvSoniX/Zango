@@ -7,6 +7,8 @@ import ir.nextminds.auth.domain.entity.UserRoleId;
 import ir.nextminds.auth.domain.enums.AccountStatusEnum;
 import ir.nextminds.auth.dto.AssignRoleRequestDTO;
 import ir.nextminds.auth.dto.CreateRoleRequestDTO;
+import ir.nextminds.auth.dto.UpdateRoleRequestDTO;
+import ir.nextminds.auth.exception.LastAdminException;
 import ir.nextminds.auth.exception.DuplicateRoleAssignmentException;
 import ir.nextminds.auth.exception.RoleInUseException;
 import ir.nextminds.auth.repository.RoleRepository;
@@ -84,13 +86,46 @@ class RoleServiceTest {
     @Test
     void refusesToDeleteARoleThatIsStillAssigned() {
         UUID roleId = UUID.randomUUID();
-        when(roleRepository.existsById(roleId)).thenReturn(true);
+        when(roleRepository.findByIdForUpdate(roleId)).thenReturn(Optional.of(role(roleId, "ROLE_ADMIN")));
         when(userRoleRepository.existsByRole_Id(roleId)).thenReturn(true);
 
         assertThatThrownBy(() -> roleService.delete(roleId))
                 .isInstanceOf(RoleInUseException.class);
 
         verify(roleRepository, never()).deleteById(roleId);
+    }
+
+    @Test
+    void refusesToRevokeTheLastActiveAdministrator() {
+        UUID userId = UUID.randomUUID();
+        UUID roleId = UUID.randomUUID();
+        when(userRepository.findById(userId)).thenReturn(Optional.of(UserEntity.create(AccountStatusEnum.ACTIVE, Instant.now())));
+        when(roleRepository.findByIdForUpdate(roleId)).thenReturn(Optional.of(role(roleId, "ROLE_ADMIN")));
+        when(userRoleRepository.existsById(new UserRoleId(userId, roleId))).thenReturn(true);
+        when(userRoleRepository.countActiveUsersByRoleId(roleId)).thenReturn(1L);
+        assertThatThrownBy(() -> roleService.revoke(userId, roleId)).isInstanceOf(LastAdminException.class);
+        verify(userRoleRepository, never()).deleteById(any());
+    }
+
+    @Test
+    void allowsRevocationWhenAnotherActiveAdministratorExists() {
+        UUID userId = UUID.randomUUID();
+        UUID roleId = UUID.randomUUID();
+        when(userRepository.findById(userId)).thenReturn(Optional.of(UserEntity.create(AccountStatusEnum.ACTIVE, Instant.now())));
+        when(roleRepository.findByIdForUpdate(roleId)).thenReturn(Optional.of(role(roleId, "ROLE_ADMIN")));
+        when(userRoleRepository.existsById(new UserRoleId(userId, roleId))).thenReturn(true);
+        when(userRoleRepository.countActiveUsersByRoleId(roleId)).thenReturn(2L);
+        roleService.revoke(userId, roleId);
+        verify(userRoleRepository).deleteById(new UserRoleId(userId, roleId));
+    }
+
+    @Test
+    void refusesRenamingTheAdminRoleWhenActiveAdministratorsExist() {
+        UUID roleId = UUID.randomUUID();
+        when(roleRepository.findByIdForUpdate(roleId)).thenReturn(Optional.of(role(roleId, "ROLE_ADMIN")));
+        when(userRoleRepository.countActiveUsersByRoleId(roleId)).thenReturn(2L);
+        assertThatThrownBy(() -> roleService.update(roleId, new UpdateRoleRequestDTO("ROLE_OTHER", null)))
+                .isInstanceOf(LastAdminException.class);
     }
 
     @Test

@@ -17,8 +17,12 @@ import java.util.UUID;
 @Component
 public class CorrelationIdFilter implements WebFilter, Ordered {
 
+    public static final String ATTRIBUTE = CorrelationIdFilter.class.getName() + ".id";
+
     @Override
-    public Mono<Void> filter(ServerWebExchange exchange, WebFilterChain chain) {
+    public Mono<Void> filter(ServerWebExchange exchange,
+                             WebFilterChain chain
+    ) {
         String correlationId = resolveOrGenerate(
                 exchange.getRequest().getHeaders().getFirst(GatewayHeaders.CORRELATION_ID)
         );
@@ -60,7 +64,8 @@ public class CorrelationIdFilter implements WebFilter, Ordered {
         } catch (IllegalArgumentException ignored) {
             return null;
         }
-        return null;
+
+        return UUID.randomUUID().toString();
     }
 
     @Override

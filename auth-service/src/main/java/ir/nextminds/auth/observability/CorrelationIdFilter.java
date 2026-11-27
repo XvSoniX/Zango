@@ -20,6 +20,7 @@ import java.util.UUID;
 public class CorrelationIdFilter extends OncePerRequestFilter {
 
     static final String HEADER = "X-Correlation-ID";
+    public static final String ATTRIBUTE = CorrelationIdFilter.class.getName() + ".id";
 
     @Override
     protected void doFilterInternal(
@@ -28,6 +29,7 @@ public class CorrelationIdFilter extends OncePerRequestFilter {
             FilterChain filterChain
     ) throws ServletException, IOException {
         String correlationId = correlationId(request.getHeader(HEADER));
+        request.setAttribute(ATTRIBUTE, correlationId);
         response.setHeader(HEADER, correlationId);
         MDC.put("correlationId", correlationId);
         try {

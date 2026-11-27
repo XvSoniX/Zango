@@ -1,6 +1,7 @@
 package ir.nextminds.auth.exception;
 
 import jakarta.servlet.http.HttpServletRequest;
+import ir.nextminds.auth.observability.CorrelationIdFilter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.MessageSource;
@@ -61,6 +62,11 @@ public class AuthExceptionHandler {
         return problem(AuthErrorCode.ROLE_IN_USE, request, List.of());
     }
 
+    @ExceptionHandler(LastAdminException.class)
+    public ProblemDetail handleLastAdmin(HttpServletRequest request) {
+        return problem(AuthErrorCode.LAST_ADMIN, request, List.of());
+    }
+
     @ExceptionHandler(PasswordResetFailedException.class)
     public ProblemDetail handlePasswordResetFailed(HttpServletRequest request) {
         return problem(AuthErrorCode.PASSWORD_RESET_FAILED, request, List.of());
@@ -113,6 +119,10 @@ public class AuthExceptionHandler {
     }
 
     private String correlationId(HttpServletRequest request) {
+        Object established = request.getAttribute(CorrelationIdFilter.ATTRIBUTE);
+        if (established instanceof String id) {
+            return id;
+        }
         String correlationId = request.getHeader(CORRELATION_ID);
         if (correlationId == null || correlationId.isBlank()) {
             return UUID.randomUUID().toString();
