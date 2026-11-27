@@ -1,8 +1,7 @@
 package ir.nextminds.gateway.exception;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import ir.nextminds.gateway.exception.enums.GatewayErrorCode;
 import ir.nextminds.gateway.constant.GatewayHeaders;
+import ir.nextminds.gateway.exception.enums.GatewayErrorCode;
 import ir.nextminds.gateway.filter.CorrelationIdFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.MessageSource;
@@ -13,6 +12,7 @@ import org.springframework.http.ProblemDetail;
 import org.springframework.stereotype.Component;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.net.URI;
 import java.util.List;
@@ -23,28 +23,37 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class GatewayErrorWriter {
 
-    private final ObjectMapper objectMapper;
+    private static final Locale DEFAULT_LOCALE = Locale.forLanguageTag("fa");
+
+    private final JsonMapper jsonMapper;
     private final MessageSource messageSource;
 
     public Mono<Void> write(
             ServerWebExchange exchange,
             GatewayErrorCode errorCode
     ) {
-        Locale locale = resolveLocale(exchange);
+        if (exchange.getResponse().isCommitted()) {
+            return Mono.error(
+                    new IllegalStateException("Response already committed")
+            );
+        }
 
+        Locale locale = resolveLocale(exchange);
         String code = errorCode.name();
 
-        String title = messageSource.getMessage(
+        String title = resolveMessage(
                 "error." + code + ".title",
-                null,
+                errorCode.getStatus().getReasonPhrase(),
                 locale
         );
 
-        String detail = messageSource.getMessage(
+        String detail = resolveMessage(
                 "error." + code + ".detail",
-                null,
+                code,
                 locale
         );
+
+        String correlationId = resolveCorrelationId(exchange);
 
         ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
                 errorCode.getStatus(),
@@ -53,56 +62,79 @@ public class GatewayErrorWriter {
 
         problemDetail.setType(URI.create(errorCode.getType()));
         problemDetail.setTitle(title);
-        problemDetail.setInstance(
-                URI.create(
-                        exchange.getRequest().getPath().value()
-                )
-        );
+        problemDetail.setInstance(resolveInstance(exchange));
 
         problemDetail.setProperty("isSuccess", false);
         problemDetail.setProperty("errorCode", code);
-        String correlationId = exchange.getAttribute(CorrelationIdFilter.ATTRIBUTE);
-        if (correlationId == null) {
-            correlationId = UUID.randomUUID().toString();
-            exchange.getAttributes().put(CorrelationIdFilter.ATTRIBUTE, correlationId);
-        }
-        exchange.getResponse().getHeaders().set(GatewayHeaders.CORRELATION_ID, correlationId);
         problemDetail.setProperty("correlationId", correlationId);
 
-        if (exchange.getResponse().isCommitted()) {
-            return Mono.error(
-                    new IllegalStateException("Response already committed")
-            );
-        }
-
         try {
-            byte[] responseBody = objectMapper.writeValueAsBytes(problemDetail);
+            byte[] responseBody = jsonMapper.writeValueAsBytes(problemDetail);
 
             exchange.getResponse().setStatusCode(errorCode.getStatus());
-
             exchange.getResponse().getHeaders()
                     .setContentType(MediaType.APPLICATION_PROBLEM_JSON);
+            exchange.getResponse().getHeaders()
+                    .set(GatewayHeaders.CORRELATION_ID, correlationId);
 
             DataBuffer buffer = exchange.getResponse()
                     .bufferFactory()
                     .wrap(responseBody);
 
             return exchange.getResponse().writeWith(Mono.just(buffer));
-
         } catch (Exception exception) {
             return Mono.error(exception);
         }
     }
 
-    private Locale resolveLocale(
-            ServerWebExchange exchange
-    ) {
+    private String resolveMessage(String key, String fallback, Locale locale) {
+        String resolved = messageSource.getMessage(key, null, fallback, locale);
+        return resolved != null && !resolved.isBlank() ? resolved : fallback;
+    }
+
+    private String resolveCorrelationId(ServerWebExchange exchange) {
+        Object attributeValue = exchange.getAttribute(GatewayHeaders.CORRELATION_ID_ATTRIBUTE);
+        if (attributeValue instanceof String attrString) {
+            String valid = CorrelationIdFilter.normalizeValidUuid(attrString);
+            if (valid != null) {
+                return valid;
+            }
+        }
+
+        String responseHeader = CorrelationIdFilter.normalizeValidUuid(
+                exchange.getResponse().getHeaders().getFirst(GatewayHeaders.CORRELATION_ID)
+        );
+        if (responseHeader != null) {
+            return responseHeader;
+        }
+
+        String requestHeader = CorrelationIdFilter.normalizeValidUuid(
+                exchange.getRequest().getHeaders().getFirst(GatewayHeaders.CORRELATION_ID)
+        );
+        if (requestHeader != null) {
+            return requestHeader;
+        }
+
+        return UUID.randomUUID().toString();
+    }
+
+    private URI resolveInstance(ServerWebExchange exchange) {
+        String path = exchange.getRequest().getPath().value();
+        try {
+            return URI.create(path);
+        } catch (IllegalArgumentException exception) {
+            String rawPath = exchange.getRequest().getURI().getRawPath();
+            return URI.create(rawPath != null && !rawPath.isBlank() ? rawPath : "/");
+        }
+    }
+
+    private Locale resolveLocale(ServerWebExchange exchange) {
         String acceptLanguage = exchange.getRequest()
                 .getHeaders()
                 .getFirst(HttpHeaders.ACCEPT_LANGUAGE);
 
         if (acceptLanguage == null || acceptLanguage.isBlank()) {
-            return Locale.forLanguageTag("fa");
+            return DEFAULT_LOCALE;
         }
 
         try {
@@ -112,16 +144,14 @@ public class GatewayErrorWriter {
             Locale matched = Locale.lookup(
                     ranges,
                     List.of(
-                            Locale.forLanguageTag("fa"),
+                            DEFAULT_LOCALE,
                             Locale.ENGLISH
                     )
             );
 
-            return matched != null
-                    ? matched
-                    : Locale.forLanguageTag("fa");
+            return matched != null ? matched : DEFAULT_LOCALE;
         } catch (IllegalArgumentException exception) {
-            return Locale.forLanguageTag("fa");
+            return DEFAULT_LOCALE;
         }
     }
 }

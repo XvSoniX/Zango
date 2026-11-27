@@ -11,56 +11,58 @@ import reactor.core.publisher.Mono;
 
 import java.util.UUID;
 
+/**
+ * Establishes and propagates a canonical UUID {@code X-Correlation-ID} before Spring Security runs.
+ */
 @Component
 public class CorrelationIdFilter implements WebFilter, Ordered {
 
     public static final String ATTRIBUTE = CorrelationIdFilter.class.getName() + ".id";
 
     @Override
-    public Mono<Void> filter(
-            ServerWebExchange exchange,
-            WebFilterChain chain
+    public Mono<Void> filter(ServerWebExchange exchange,
+                             WebFilterChain chain
     ) {
+        String correlationId = resolveOrGenerate(
+                exchange.getRequest().getHeaders().getFirst(GatewayHeaders.CORRELATION_ID)
+        );
 
-        String correlationId = resolveCorrelationId(exchange);
-        exchange.getAttributes().put(ATTRIBUTE, correlationId);
-
-        ServerHttpRequest request = exchange.getRequest()
+        ServerHttpRequest mutatedRequest = exchange.getRequest()
                 .mutate()
-                .headers(headers -> headers.set(
-                        GatewayHeaders.CORRELATION_ID,
-                        correlationId
-                ))
+                .headers(headers -> headers.set(GatewayHeaders.CORRELATION_ID, correlationId))
                 .build();
 
-        exchange.getResponse().getHeaders().set(
-                GatewayHeaders.CORRELATION_ID,
-                correlationId
-        );
+        ServerWebExchange mutatedExchange = exchange.mutate()
+                .request(mutatedRequest)
+                .build();
 
-        return chain.filter(
-                exchange.mutate()
-                        .request(request)
-                        .build()
-        );
+        mutatedExchange.getAttributes().put(GatewayHeaders.CORRELATION_ID_ATTRIBUTE, correlationId);
+        mutatedExchange.getResponse().getHeaders().set(GatewayHeaders.CORRELATION_ID, correlationId);
+        // Re-assert canonical ID before headers flush so downstream services cannot overwrite or strip it.
+        mutatedExchange.getResponse().beforeCommit(() -> {
+            mutatedExchange.getResponse().getHeaders().set(GatewayHeaders.CORRELATION_ID, correlationId);
+            return Mono.empty();
+        });
+
+        return chain.filter(mutatedExchange);
     }
 
-    private String resolveCorrelationId(ServerWebExchange exchange) {
+    public static String resolveOrGenerate(String candidate) {
+        String valid = normalizeValidUuid(candidate);
+        return valid != null ? valid : UUID.randomUUID().toString();
+    }
 
-        String correlationId = exchange.getRequest()
-                .getHeaders()
-                .getFirst(GatewayHeaders.CORRELATION_ID);
-
-        if (correlationId != null) {
-            try {
-                UUID uuid = UUID.fromString(correlationId);
-
-                if (uuid.toString().equalsIgnoreCase(correlationId)) {
-                    return correlationId;
-                }
-            } catch (IllegalArgumentException ignored) {
-                // Generate a new ID for invalid values.
+    public static String normalizeValidUuid(String candidate) {
+        if (candidate == null || candidate.isBlank()) {
+            return null;
+        }
+        try {
+            UUID uuid = UUID.fromString(candidate);
+            if (uuid.toString().equalsIgnoreCase(candidate)) {
+                return candidate;
             }
+        } catch (IllegalArgumentException ignored) {
+            return null;
         }
 
         return UUID.randomUUID().toString();

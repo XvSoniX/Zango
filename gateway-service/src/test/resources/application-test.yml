@@ -2,13 +2,6 @@ nextminds:
   jwt:
     issuer: http://localhost:8081
 
-spring:
-  security:
-    oauth2:
-      resourceserver:
-        jwt:
-          public-key-location: file:./keys/public.pem
-
 eureka:
   client:
     enabled: false
