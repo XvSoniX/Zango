@@ -41,7 +41,7 @@ class UserServiceTest {
 
     @BeforeEach
     void setUp() {
-        userService = new UserService(userRepository, FIXED_CLOCK, 8, 16);
+        userService = new UserService(userRepository, FIXED_CLOCK, 8, 18);
     }
 
     @Test
@@ -85,21 +85,26 @@ class UserServiceTest {
         UUID authId = UUID.randomUUID();
         when(userRepository.existsByAuthUserId(authId)).thenReturn(false);
 
-        // 17 years old on 2026-06-15
+        // 19 years old on 2026-06-15
         assertThatThrownBy(() -> userService.create(
-                new CreateUserRequest(authId, "Sara", "Ahmadi", LocalDate.of(2009, 6, 15))))
+                new CreateUserRequest(authId, "Sara", "Ahmadi", LocalDate.of(2007, 6, 15))))
                 .isInstanceOf(BusinessRuleException.class);
     }
 
     @Test
     void createAcceptsBoundaryAges() {
-        UUID authId = UUID.randomUUID();
-        when(userRepository.existsByAuthUserId(authId)).thenReturn(false);
+        UUID authIdMin = UUID.randomUUID();
+        UUID authIdMax = UUID.randomUUID();
+        when(userRepository.existsByAuthUserId(any())).thenReturn(false);
         when(userRepository.saveAndFlush(any(User.class))).thenAnswer(inv -> inv.getArgument(0));
 
         // exactly 8 today
         assertThat(userService.create(
-                new CreateUserRequest(authId, "A", "B", LocalDate.of(2018, 6, 15)))).isNotNull();
+                new CreateUserRequest(authIdMin, "A", "B", LocalDate.of(2018, 6, 15)))).isNotNull();
+
+        // exactly 18 today
+        assertThat(userService.create(
+                new CreateUserRequest(authIdMax, "C", "D", LocalDate.of(2008, 6, 15)))).isNotNull();
     }
 
     @Test
@@ -112,6 +117,27 @@ class UserServiceTest {
     }
 
     @Test
+    void getByAuthUserIdReturnsProfile() {
+        UUID authId = UUID.randomUUID();
+        User existing = new User(authId, "Sara", "Ahmadi", LocalDate.of(2015, 1, 1));
+        when(userRepository.findByAuthUserId(authId)).thenReturn(Optional.of(existing));
+
+        UserResponse response = userService.getByAuthUserId(authId);
+
+        assertThat(response.authUserId()).isEqualTo(authId);
+        assertThat(response.firstName()).isEqualTo("Sara");
+    }
+
+    @Test
+    void getByAuthUserIdThrowsWhenMissing() {
+        UUID authId = UUID.randomUUID();
+        when(userRepository.findByAuthUserId(authId)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> userService.getByAuthUserId(authId))
+                .isInstanceOf(ResourceNotFoundException.class);
+    }
+
+    @Test
     void updateChangesProfileButNotAuthUserId() {
         UUID id = UUID.randomUUID();
         UUID authId = UUID.randomUUID();
@@ -120,11 +146,35 @@ class UserServiceTest {
         when(userRepository.saveAndFlush(existing)).thenReturn(existing);
 
         UserResponse response = userService.update(id,
-                new UpdateUserRequest("New", "Person", LocalDate.of(2014, 3, 3)));
+                new UpdateUserRequest(" New ", " Person ", LocalDate.of(2014, 3, 3)));
 
         assertThat(response.firstName()).isEqualTo("New");
         assertThat(response.lastName()).isEqualTo("Person");
         assertThat(response.authUserId()).isEqualTo(authId);
+    }
+
+    @Test
+    void updateRejectsAgeOutOfRange() {
+        UUID id = UUID.randomUUID();
+        UUID authId = UUID.randomUUID();
+        User existing = new User(authId, "Old", "Name", LocalDate.of(2015, 1, 1));
+        when(userRepository.findById(id)).thenReturn(Optional.of(existing));
+
+        assertThatThrownBy(() -> userService.update(id,
+                new UpdateUserRequest("New", "Person", LocalDate.of(2005, 1, 1))))
+                .isInstanceOf(BusinessRuleException.class);
+        verify(userRepository, never()).saveAndFlush(any());
+    }
+
+    @Test
+    void deleteRemovesExistingUser() {
+        UUID id = UUID.randomUUID();
+        User existing = new User(UUID.randomUUID(), "Sara", "Ahmadi", LocalDate.of(2015, 1, 1));
+        when(userRepository.findById(id)).thenReturn(Optional.of(existing));
+
+        userService.delete(id);
+
+        verify(userRepository).delete(existing);
     }
 
     @Test
